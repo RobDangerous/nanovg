@@ -267,32 +267,32 @@ static NVGstate* nvg__getState(NVGcontext* ctx)
 	return &ctx->states[ctx->nstates-1];
 }
 
-NVGcontext* nvgCreateInternal(NVGparams* params)
+static function nvgCreateInternal(params: NVGparams): NVGcontext
 {
-	FONSparams fontParams;
-	NVGcontext* ctx = (NVGcontext*)malloc(sizeof(NVGcontext));
-	int i;
-	if (ctx == NULL) goto error;
-	memset(ctx, 0, sizeof(NVGcontext));
+	var fontParams: FONSparams;
+	var ctx: NVGcontext = new NVGcontext();
+	var i: Int;
+	if (ctx == null) return null;
+	// memset(ctx, 0, sizeof(NVGcontext));
 
 	ctx->params = *params;
 	for (i = 0; i < NVG_MAX_FONTIMAGES; i++)
 		ctx->fontImages[i] = 0;
 
 	ctx->commands = (float*)malloc(sizeof(float)*NVG_INIT_COMMANDS_SIZE);
-	if (!ctx->commands) goto error;
+	if (ctx.commands == null) return null;
 	ctx->ncommands = 0;
 	ctx->ccommands = NVG_INIT_COMMANDS_SIZE;
 
-	ctx->cache = nvg__allocPathCache();
-	if (ctx->cache == NULL) goto error;
+	ctx.cache = nvg__allocPathCache();
+	if (ctx.cache == null) return null;
 
 	nvgSave(ctx);
 	nvgReset(ctx);
 
 	nvg__setDevicePixelRatio(ctx, 1.0f);
 
-	if (ctx->params.renderCreate(ctx->params.userPtr) == 0) goto error;
+	if (ctx.params.renderCreate(ctx->params.userPtr) == 0) goto error;
 
 	// Init font rendering
 	memset(&fontParams, 0, sizeof(fontParams));
@@ -313,41 +313,37 @@ NVGcontext* nvgCreateInternal(NVGparams* params)
 	ctx->fontImageIdx = 0;
 
 	return ctx;
-
-error:
-	nvgDeleteInternal(ctx);
-	return 0;
 }
 
-NVGparams* nvgInternalParams(NVGcontext* ctx)
+static function nvgInternalParams(ctx: NVGcontext): NVGparams
 {
-    return &ctx->params;
+    return ctx.params;
 }
 
-void nvgDeleteInternal(NVGcontext* ctx)
+static function nvgDeleteInternal(ctx: NVGcontext): Void
 {
-	int i;
-	if (ctx == NULL) return;
-	if (ctx->commands != NULL) free(ctx->commands);
-	if (ctx->cache != NULL) nvg__deletePathCache(ctx->cache);
+	var i: Int;
+	if (ctx == null) return;
+	// if (ctx->commands != null) free(ctx->commands);
+	if (ctx.cache != null) nvg__deletePathCache(ctx->cache);
 
-	if (ctx->fs)
+	if (ctx.fs)
 		fonsDeleteInternal(ctx->fs);
 
-	for (i = 0; i < NVG_MAX_FONTIMAGES; i++) {
-		if (ctx->fontImages[i] != 0) {
-			nvgDeleteImage(ctx, ctx->fontImages[i]);
-			ctx->fontImages[i] = 0;
+	for (i in 0...NVG_MAX_FONTIMAGES) {
+		if (ctx.fontImages[i] != 0) {
+			nvgDeleteImage(ctx, ctx.fontImages[i]);
+			ctx.fontImages[i] = 0;
 		}
 	}
 
-	if (ctx->params.renderDelete != NULL)
-		ctx->params.renderDelete(ctx->params.userPtr);
+	if (ctx.params.renderDelete != NULL)
+		ctx.params.renderDelete(ctx.params.userPtr);
 
 	free(ctx);
 }
 
-void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float devicePixelRatio)
+static function nvgBeginFrame(ctx: NVGcontext, windowWidth: Float, windowHeight: Float, devicePixelRatio: Float): Void
 {
 /*	printf("Tris: draws:%d  fill:%d  stroke:%d  text:%d  TOT:%d\n",
 		ctx->drawCallCount, ctx->fillTriCount, ctx->strokeTriCount, ctx->textTriCount,
@@ -367,15 +363,15 @@ void nvgBeginFrame(NVGcontext* ctx, float windowWidth, float windowHeight, float
 	ctx->textTriCount = 0;
 }
 
-void nvgCancelFrame(NVGcontext* ctx)
+static function nvgCancelFrame(ctx: NVGcontext): Void
 {
-	ctx->params.renderCancel(ctx->params.userPtr);
+	ctx.params.renderCancel(ctx.params.userPtr);
 }
 
-void nvgEndFrame(NVGcontext* ctx)
+static function nvgEndFrame(ctx: NVGcontext): Void
 {
-	ctx->params.renderFlush(ctx->params.userPtr);
-	if (ctx->fontImageIdx != 0) {
+	ctx.params.renderFlush(ctx.params.userPtr);
+	if (ctx.fontImageIdx != 0) {
 		int fontImage = ctx->fontImages[ctx->fontImageIdx];
 		int i, j, iw, ih;
 		// delete images that smaller than current one
@@ -402,19 +398,19 @@ void nvgEndFrame(NVGcontext* ctx)
 	}
 }
 
-NVGcolor nvgRGB(unsigned char r, unsigned char g, unsigned char b)
+static function nvgRGB(r: Int, g: Int, b: Int): NVGcolor
 {
 	return nvgRGBA(r,g,b,255);
 }
 
-NVGcolor nvgRGBf(float r, float g, float b)
+static function nvgRGBf(r: Float, g: Float, b: Float): NVGcolor
 {
-	return nvgRGBAf(r,g,b,1.0f);
+	return nvgRGBAf(r,g,b,1.0);
 }
 
-NVGcolor nvgRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned char a)
+static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
 {
-	NVGcolor color;
+	var color: NVGcolor;
 	// Use longer initialization to suppress warning.
 	color.r = r / 255.0f;
 	color.g = g / 255.0f;
@@ -423,9 +419,9 @@ NVGcolor nvgRGBA(unsigned char r, unsigned char g, unsigned char b, unsigned cha
 	return color;
 }
 
-NVGcolor nvgRGBAf(float r, float g, float b, float a)
+static function nvgRGBAf(r: Float, g: Float, b: Float, a: Float): NVGcolor
 {
-	NVGcolor color;
+	var color: NVGcolor;
 	// Use longer initialization to suppress warning.
 	color.r = r;
 	color.g = g;
@@ -434,27 +430,27 @@ NVGcolor nvgRGBAf(float r, float g, float b, float a)
 	return color;
 }
 
-NVGcolor nvgTransRGBA(NVGcolor c, unsigned char a)
+static function nvgTransRGBA(c: NVGcolor, a: Int): NVGcolor
 {
-	c.a = a / 255.0f;
+	c.a = a / 255.0;
 	return c;
 }
 
-NVGcolor nvgTransRGBAf(NVGcolor c, float a)
+static function nvgTransRGBAf(c: NVGcolor, a: Float): NVGcolor
 {
 	c.a = a;
 	return c;
 }
 
-NVGcolor nvgLerpRGBA(NVGcolor c0, NVGcolor c1, float u)
+static function nvgLerpRGBA(c0: NVGcolor, c1: NVGcolor, u: Float): NVGcolor
 {
-	int i;
-	float oneminu;
-	NVGcolor cint = {{{0}}};
+	// var i: Int;
+	var oneminu: Float;
+	var cint: NVGcolor = {{{0}}};
 
 	u = nvg__clampf(u, 0.0f, 1.0f);
 	oneminu = 1.0f - u;
-	for( i = 0; i <4; i++ )
+	for( i in 0...4 )
 	{
 		cint.rgba[i] = c0.rgba[i] * oneminu + c1.rgba[i] * u;
 	}
@@ -462,89 +458,89 @@ NVGcolor nvgLerpRGBA(NVGcolor c0, NVGcolor c1, float u)
 	return cint;
 }
 
-NVGcolor nvgHSL(float h, float s, float l)
+static function nvgHSL(h: Float, s: Float, l: Float): NVGcolor
 {
 	return nvgHSLA(h,s,l,255);
 }
 
-static float nvg__hue(float h, float m1, float m2)
+static function nvg__hue(h: Float, m1: Float, m2: Float): Float
 {
 	if (h < 0) h += 1;
 	if (h > 1) h -= 1;
-	if (h < 1.0f/6.0f)
-		return m1 + (m2 - m1) * h * 6.0f;
-	else if (h < 3.0f/6.0f)
+	if (h < 1.0/6.0)
+		return m1 + (m2 - m1) * h * 6.0;
+	else if (h < 3.0/6.0)
 		return m2;
-	else if (h < 4.0f/6.0f)
-		return m1 + (m2 - m1) * (2.0f/3.0f - h) * 6.0f;
+	else if (h < 4.0/6.0)
+		return m1 + (m2 - m1) * (2.0/3.0 - h) * 6.0;
 	return m1;
 }
 
-NVGcolor nvgHSLA(float h, float s, float l, unsigned char a)
+static function nvgHSLA(h: Float, s: Float, l: Float, a: Int): NVGcolor
 {
-	float m1, m2;
-	NVGcolor col;
-	h = nvg__modf(h, 1.0f);
-	if (h < 0.0f) h += 1.0f;
-	s = nvg__clampf(s, 0.0f, 1.0f);
-	l = nvg__clampf(l, 0.0f, 1.0f);
+	var m1: Float; var m2: Float;
+	var col: NVGcolor;
+	h = nvg__modf(h, 1.0);
+	if (h < 0.0) h += 1.0;
+	s = nvg__clampf(s, 0.0, 1.0);
+	l = nvg__clampf(l, 0.0, 1.0);
 	m2 = l <= 0.5f ? (l * (1 + s)) : (l + s - l * s);
 	m1 = 2 * l - m2;
-	col.r = nvg__clampf(nvg__hue(h + 1.0f/3.0f, m1, m2), 0.0f, 1.0f);
-	col.g = nvg__clampf(nvg__hue(h, m1, m2), 0.0f, 1.0f);
-	col.b = nvg__clampf(nvg__hue(h - 1.0f/3.0f, m1, m2), 0.0f, 1.0f);
-	col.a = a/255.0f;
+	col.r = nvg__clampf(nvg__hue(h + 1.0/3.0, m1, m2), 0.0, 1.0);
+	col.g = nvg__clampf(nvg__hue(h, m1, m2), 0.0, 1.0);
+	col.b = nvg__clampf(nvg__hue(h - 1.0/3.0, m1, m2), 0.0, 1.0);
+	col.a = a/255.0;
 	return col;
 }
 
-void nvgTransformIdentity(float* t)
+static function nvgTransformIdentity(t: Array<Float>): Void
 {
-	t[0] = 1.0f; t[1] = 0.0f;
-	t[2] = 0.0f; t[3] = 1.0f;
-	t[4] = 0.0f; t[5] = 0.0f;
+	t[0] = 1.0; t[1] = 0.0;
+	t[2] = 0.0; t[3] = 1.0;
+	t[4] = 0.0; t[5] = 0.0;
 }
 
-void nvgTransformTranslate(float* t, float tx, float ty)
+static function nvgTransformTranslate(t: Array<Float>, tx: Float, ty: Float): Void
 {
-	t[0] = 1.0f; t[1] = 0.0f;
-	t[2] = 0.0f; t[3] = 1.0f;
+	t[0] = 1.0; t[1] = 0.0;
+	t[2] = 0.0; t[3] = 1.0;
 	t[4] = tx; t[5] = ty;
 }
 
-void nvgTransformScale(float* t, float sx, float sy)
+static function nvgTransformScale(t: Array<Float>, sx: Float, sy: Float): Void
 {
-	t[0] = sx; t[1] = 0.0f;
-	t[2] = 0.0f; t[3] = sy;
-	t[4] = 0.0f; t[5] = 0.0f;
+	t[0] = sx; t[1] = 0.0;
+	t[2] = 0.0; t[3] = sy;
+	t[4] = 0.0; t[5] = 0.0;
 }
 
-void nvgTransformRotate(float* t, float a)
+static function nvgTransformRotate(t: Array<Float>, a: Float): Void
 {
-	float cs = nvg__cosf(a), sn = nvg__sinf(a);
+	var cs: Float = nvg__cosf(a), sn = nvg__sinf(a);
 	t[0] = cs; t[1] = sn;
 	t[2] = -sn; t[3] = cs;
-	t[4] = 0.0f; t[5] = 0.0f;
+	t[4] = 0.0; t[5] = 0.0;
 }
 
-void nvgTransformSkewX(float* t, float a)
+static function nvgTransformSkewX(t: Array<Float>, a: Float): Void
 {
-	t[0] = 1.0f; t[1] = 0.0f;
-	t[2] = nvg__tanf(a); t[3] = 1.0f;
-	t[4] = 0.0f; t[5] = 0.0f;
+	t[0] = 1.0; t[1] = 0.0;
+	t[2] = nvg__tanf(a); t[3] = 1.0;
+	t[4] = 0.0; t[5] = 0.0;
 }
 
-void nvgTransformSkewY(float* t, float a)
+static function nvgTransformSkewY(t: Array<Float>, a: Float): Void
 {
-	t[0] = 1.0f; t[1] = nvg__tanf(a);
-	t[2] = 0.0f; t[3] = 1.0f;
-	t[4] = 0.0f; t[5] = 0.0f;
+	t[0] = 1.0; t[1] = nvg__tanf(a);
+	t[2] = 0.0; t[3] = 1.0;
+	t[4] = 0.0; t[5] = 0.0;
 }
 
-void nvgTransformMultiply(float* t, const float* s)
+static function nvgTransformMultiply(t: Array<Float>, s: Array<Float>): Void
 {
-	float t0 = t[0] * s[0] + t[1] * s[2];
-	float t2 = t[2] * s[0] + t[3] * s[2];
-	float t4 = t[4] * s[0] + t[5] * s[2] + s[4];
+	var t0: Float = t[0] * s[0] + t[1] * s[2];
+	var t2: Float = t[2] * s[0] + t[3] * s[2];
+	var t4: Float = t[4] * s[0] + t[5] * s[2] + s[4];
 	t[1] = t[0] * s[1] + t[1] * s[3];
 	t[3] = t[2] * s[1] + t[3] * s[3];
 	t[5] = t[4] * s[1] + t[5] * s[3] + s[5];
@@ -553,7 +549,7 @@ void nvgTransformMultiply(float* t, const float* s)
 	t[4] = t4;
 }
 
-void nvgTransformPremultiply(float* t, const float* s)
+static function nvgTransformPremultiply(t: Array<Float>, s: Array<Float>): Void
 {
 	float s2[6];
 	memcpy(s2, s, sizeof(float)*6);
@@ -561,9 +557,9 @@ void nvgTransformPremultiply(float* t, const float* s)
 	memcpy(t, s2, sizeof(float)*6);
 }
 
-int nvgTransformInverse(float* inv, const float* t)
+static function nvgTransformInverse(inv: Array<Float>, t: Array<Float>): Int
 {
-	double invdet, det = (double)t[0] * t[3] - (double)t[2] * t[1];
+	var invdet: Float; var det: Float = t[0] * t[3] - t[2] * t[1];
 	if (det > -1e-6 && det < 1e-6) {
 		nvgTransformIdentity(inv);
 		return 0;
@@ -578,204 +574,204 @@ int nvgTransformInverse(float* inv, const float* t)
 	return 1;
 }
 
-void nvgTransformPoint(float* dx, float* dy, const float* t, float sx, float sy)
+static function nvgTransformPoint(dx: Ref<Float>, dy: Ref<Float>, t: Array<Float>, sx: Float, sy: Float): Void
 {
 	*dx = sx*t[0] + sy*t[2] + t[4];
 	*dy = sx*t[1] + sy*t[3] + t[5];
 }
 
-float nvgDegToRad(float deg)
+static function nvgDegToRad(deg: Float): Float
 {
-	return deg / 180.0f * NVG_PI;
+	return deg / 180.0 * NVG_PI;
 }
 
-float nvgRadToDeg(float rad)
+static function nvgRadToDeg(rad: Float): Float
 {
-	return rad / NVG_PI * 180.0f;
+	return rad / NVG_PI * 180.0;
 }
 
-static void nvg__setPaintColor(NVGpaint* p, NVGcolor color)
+static function nvg__setPaintColor(p: NVGpaint, color: NVGcolor): Void
 {
 	memset(p, 0, sizeof(*p));
 	nvgTransformIdentity(p->xform);
-	p->radius = 0.0f;
-	p->feather = 1.0f;
-	p->innerColor = color;
-	p->outerColor = color;
+	p.radius = 0.0;
+	p.feather = 1.0;
+	p.innerColor = color;
+	p.outerColor = color;
 }
 
 
 // State handling
-void nvgSave(NVGcontext* ctx)
+static function nvgSave(ctx: NVGcontext): Void
 {
-	if (ctx->nstates >= NVG_MAX_STATES)
+	if (ctx.nstates >= NVG_MAX_STATES)
 		return;
-	if (ctx->nstates > 0)
+	if (ctx.nstates > 0)
 		memcpy(&ctx->states[ctx->nstates], &ctx->states[ctx->nstates-1], sizeof(NVGstate));
 	ctx->nstates++;
 }
 
-void nvgRestore(NVGcontext* ctx)
+static function nvgRestore(ctx: NVGcontext): Void
 {
-	if (ctx->nstates <= 1)
+	if (ctx.nstates <= 1)
 		return;
-	ctx->nstates--;
+	ctx.nstates--;
 }
 
-void nvgReset(NVGcontext* ctx)
+static function nvgReset(ctx: NVGcontext): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	memset(state, 0, sizeof(*state));
 
-	nvg__setPaintColor(&state->fill, nvgRGBA(255,255,255,255));
-	nvg__setPaintColor(&state->stroke, nvgRGBA(0,0,0,255));
-	state->compositeOperation = nvg__compositeOperationState(NVG_SOURCE_OVER);
-	state->shapeAntiAlias = 1;
-	state->strokeWidth = 1.0f;
-	state->miterLimit = 10.0f;
-	state->lineCap = NVG_BUTT;
-	state->lineJoin = NVG_MITER;
-	state->alpha = 1.0f;
+	nvg__setPaintColor(state.fill, nvgRGBA(255,255,255,255));
+	nvg__setPaintColor(state.stroke, nvgRGBA(0,0,0,255));
+	state.compositeOperation = nvg__compositeOperationState(NVG_SOURCE_OVER);
+	state.shapeAntiAlias = 1;
+	state.strokeWidth = 1.0;
+	state.miterLimit = 10.0;
+	state.lineCap = NVG_BUTT;
+	state.lineJoin = NVG_MITER;
+	state.alpha = 1.0;
 	nvgTransformIdentity(state->xform);
 
-	state->scissor.extent[0] = -1.0f;
-	state->scissor.extent[1] = -1.0f;
+	state.scissor.extent[0] = -1.0;
+	state.scissor.extent[1] = -1.0;
 
-	state->fontSize = 16.0f;
-	state->letterSpacing = 0.0f;
-	state->lineHeight = 1.0f;
-	state->fontBlur = 0.0f;
-	state->textAlign = NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE;
-	state->fontId = 0;
+	state.fontSize = 16.0;
+	state.letterSpacing = 0.0;
+	state.lineHeight = 1.0;
+	state.fontBlur = 0.0;
+	state.textAlign = NVG_ALIGN_LEFT | NVG_ALIGN_BASELINE;
+	state.fontId = 0;
 }
 
 // State setting
-void nvgShapeAntiAlias(NVGcontext* ctx, int enabled)
+static function nvgShapeAntiAlias(ctx: NVGcontext, enabled: Int): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->shapeAntiAlias = enabled;
+	var state: NVGstate = nvg__getState(ctx);
+	state.shapeAntiAlias = enabled;
 }
 
-void nvgStrokeWidth(NVGcontext* ctx, float width)
+static function nvgStrokeWidth(ctx: NVGcontext, width: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	state->strokeWidth = width;
 }
 
-void nvgMiterLimit(NVGcontext* ctx, float limit)
+static function nvgMiterLimit(ctx: NVGcontext, limit: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->miterLimit = limit;
+	var state: NVGstate = nvg__getState(ctx);
+	state.miterLimit = limit;
 }
 
-void nvgLineCap(NVGcontext* ctx, int cap)
+static function nvgLineCap(ctx: NVGcontext, cap: Int): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->lineCap = cap;
+	var state: NVGstate = nvg__getState(ctx);
+	state.lineCap = cap;
 }
 
-void nvgLineJoin(NVGcontext* ctx, int join)
+static function nvgLineJoin(ctx: NVGcontext, join: Int): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->lineJoin = join;
+	var state: NVGstate = nvg__getState(ctx);
+	state.lineJoin = join;
 }
 
-void nvgGlobalAlpha(NVGcontext* ctx, float alpha)
+static function nvgGlobalAlpha(ctx: NVGcontext, alpha: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->alpha = alpha;
+	var state: NVGstate = nvg__getState(ctx);
+	state.alpha = alpha;
 }
 
-void nvgTransform(NVGcontext* ctx, float a, float b, float c, float d, float e, float f)
+static function nvgTransform(ctx: NVGcontext, a: Float, b: Float, c: Float, d: Float, e: Float, f: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6] = { a, b, c, d, e, f };
-	nvgTransformPremultiply(state->xform, t);
+	nvgTransformPremultiply(state.xform, t);
 }
 
-void nvgResetTransform(NVGcontext* ctx)
+static function nvgResetTransform(ctx: NVGcontext): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	nvgTransformIdentity(state->xform);
+	var state: NVGstate = nvg__getState(ctx);
+	nvgTransformIdentity(state.xform);
 }
 
-void nvgTranslate(NVGcontext* ctx, float x, float y)
+static function nvgTranslate(ctx: NVGcontext, x: Float, y: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6];
 	nvgTransformTranslate(t, x,y);
-	nvgTransformPremultiply(state->xform, t);
+	nvgTransformPremultiply(state.xform, t);
 }
 
-void nvgRotate(NVGcontext* ctx, float angle)
+static function nvgRotate(ctx: NVGcontext, angle: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6];
 	nvgTransformRotate(t, angle);
-	nvgTransformPremultiply(state->xform, t);
+	nvgTransformPremultiply(state.xform, t);
 }
 
-void nvgSkewX(NVGcontext* ctx, float angle)
+static function nvgSkewX(ctx: NVGcontext, angle: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6];
 	nvgTransformSkewX(t, angle);
 	nvgTransformPremultiply(state->xform, t);
 }
 
-void nvgSkewY(NVGcontext* ctx, float angle)
+static function nvgSkewY(ctx: NVGcontext, angle: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6];
 	nvgTransformSkewY(t, angle);
 	nvgTransformPremultiply(state->xform, t);
 }
 
-void nvgScale(NVGcontext* ctx, float x, float y)
+static function nvgScale(ctx: NVGcontext, x: Float, y: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float t[6];
 	nvgTransformScale(t, x,y);
 	nvgTransformPremultiply(state->xform, t);
 }
 
-void nvgCurrentTransform(NVGcontext* ctx, float* xform)
+static function nvgCurrentTransform(ctx: NVGcontext, xform: Array<Float>): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	if (xform == NULL) return;
-	memcpy(xform, state->xform, sizeof(float)*6);
+	memcpy(xform, state.xform, sizeof(float)*6);
 }
 
-void nvgStrokeColor(NVGcontext* ctx, NVGcolor color)
+static function nvgStrokeColor(ctx: NVGcontext, color: NVGcolor): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	nvg__setPaintColor(&state->stroke, color);
+	var state: NVGstate = nvg__getState(ctx);
+	nvg__setPaintColor(&state.stroke, color);
 }
 
-void nvgStrokePaint(NVGcontext* ctx, NVGpaint paint)
+static function nvgStrokePaint(ctx: NVGcontext, paint: NVGpaint): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->stroke = paint;
-	nvgTransformMultiply(state->stroke.xform, state->xform);
+	var state: NVGstate = nvg__getState(ctx);
+	state.stroke = paint;
+	nvgTransformMultiply(state.stroke.xform, state.xform);
 }
 
-void nvgFillColor(NVGcontext* ctx, NVGcolor color)
+static function nvgFillColor(ctx: NVGcontext, color: NVGcolor): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	nvg__setPaintColor(&state->fill, color);
+	var state: NVGstate = nvg__getState(ctx);
+	nvg__setPaintColor(state.fill, color);
 }
 
-void nvgFillPaint(NVGcontext* ctx, NVGpaint paint)
+static function nvgFillPaint(ctx: NVGcontext, paint: NVGpaint): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->fill = paint;
-	nvgTransformMultiply(state->fill.xform, state->xform);
+	var state: NVGstate = nvg__getState(ctx);
+	state.fill = paint;
+	nvgTransformMultiply(state.fill.xform, state.xform);
 }
 
-int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
+static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: Int): Int
 {
-	int w, h, n, image;
-	unsigned char* img;
+	var w: Int; var h: Int; var n: Int; var image: Int;
+	var img: Array<Int>;
 	stbi_set_unpremultiply_on_load(1);
 	stbi_convert_iphone_png_to_rgb(1);
 	img = stbi_load(filename, &w, &h, &n, 4);
@@ -788,11 +784,11 @@ int nvgCreateImage(NVGcontext* ctx, const char* filename, int imageFlags)
 	return image;
 }
 
-int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int ndata)
+static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<Int>, ndata: Int): Int
 {
-	int w, h, n, image;
-	unsigned char* img = stbi_load_from_memory(data, ndata, &w, &h, &n, 4);
-	if (img == NULL) {
+	var w: Int; var h: Int; var n: Int; var image: Int;
+	var img: Array<Int> = stbi_load_from_memory(data, ndata, &w, &h, &n, 4);
+	if (img == null) {
 //		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
 		return 0;
 	}
@@ -801,35 +797,35 @@ int nvgCreateImageMem(NVGcontext* ctx, int imageFlags, unsigned char* data, int 
 	return image;
 }
 
-int nvgCreateImageRGBA(NVGcontext* ctx, int w, int h, int imageFlags, const unsigned char* data)
+static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int
 {
-	return ctx->params.renderCreateTexture(ctx->params.userPtr, NVG_TEXTURE_RGBA, w, h, imageFlags, data);
+	return ctx.params.renderCreateTexture(ctx.params.userPtr, NVG_TEXTURE_RGBA, w, h, imageFlags, data);
 }
 
-void nvgUpdateImage(NVGcontext* ctx, int image, const unsigned char* data)
+static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void
 {
-	int w, h;
-	ctx->params.renderGetTextureSize(ctx->params.userPtr, image, &w, &h);
-	ctx->params.renderUpdateTexture(ctx->params.userPtr, image, 0,0, w,h, data);
+	var w: Int; var h: Int;
+	ctx.params.renderGetTextureSize(ctx.params.userPtr, image, &w, &h);
+	ctx.params.renderUpdateTexture(ctx.params.userPtr, image, 0,0, w,h, data);
 }
 
-void nvgImageSize(NVGcontext* ctx, int image, int* w, int* h)
+static function nvgImageSize(ctx: NVGcontext, image: Int, w: Ref<Int>, h: Ref<Int>): Void
 {
-	ctx->params.renderGetTextureSize(ctx->params.userPtr, image, w, h);
+	ctx.params.renderGetTextureSize(ctx.params.userPtr, image, w, h);
 }
 
-void nvgDeleteImage(NVGcontext* ctx, int image)
+static function nvgDeleteImage(ctx: NVGcontext, image: Int): Void
 {
-	ctx->params.renderDeleteTexture(ctx->params.userPtr, image);
+	ctx.params.renderDeleteTexture(ctx.params.userPtr, image);
 }
 
-NVGpaint nvgLinearGradient(NVGcontext* ctx,
-								  float sx, float sy, float ex, float ey,
-								  NVGcolor icol, NVGcolor ocol)
+static function nvgLinearGradient(ctx: NVGcontext,
+								  sx: Float, sy: Float, ex: Float, ey: Float,
+								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	NVGpaint p;
-	float dx, dy, d;
-	const float large = 1e5;
+	var p: NVGpaint;
+	var dx: Float; var dy: Float; var d: Float;
+	final var large: Float = 1e5;
 	NVG_NOTUSED(ctx);
 	memset(&p, 0, sizeof(p));
 
@@ -862,13 +858,13 @@ NVGpaint nvgLinearGradient(NVGcontext* ctx,
 	return p;
 }
 
-NVGpaint nvgRadialGradient(NVGcontext* ctx,
-								  float cx, float cy, float inr, float outr,
-								  NVGcolor icol, NVGcolor ocol)
+static function nvgRadialGradient(ctx: NVGcontext,
+								  cx: Float, cy: Float, inr: Float, outr: Float,
+								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	NVGpaint p;
-	float r = (inr+outr)*0.5f;
-	float f = (outr-inr);
+	var p: NVGpaint;
+	var r: Float = (inr+outr)*0.5;
+	var f: Float = (outr-inr);
 	NVG_NOTUSED(ctx);
 	memset(&p, 0, sizeof(p));
 
@@ -889,11 +885,11 @@ NVGpaint nvgRadialGradient(NVGcontext* ctx,
 	return p;
 }
 
-NVGpaint nvgBoxGradient(NVGcontext* ctx,
-							   float x, float y, float w, float h, float r, float f,
-							   NVGcolor icol, NVGcolor ocol)
+static function nvgBoxGradient(ctx: NVGcontext,
+							   x: Float, y: Float, w: Float, h: Float, r: Float, f: Float,
+							   icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	NVGpaint p;
+	var p: NVGpaint;
 	NVG_NOTUSED(ctx);
 	memset(&p, 0, sizeof(p));
 
@@ -915,11 +911,11 @@ NVGpaint nvgBoxGradient(NVGcontext* ctx,
 }
 
 
-NVGpaint nvgImagePattern(NVGcontext* ctx,
-								float cx, float cy, float w, float h, float angle,
-								int image, float alpha)
+static function nvgImagePattern(ctx: NVGcontext,
+								cx: Float, cy: Float, w: Float, h: Float, angle: Float,
+								image: Int, alpha: Float): NVGpaint
 {
-	NVGpaint p;
+	var p: NVGpaint;
 	NVG_NOTUSED(ctx);
 	memset(&p, 0, sizeof(p));
 
@@ -938,42 +934,42 @@ NVGpaint nvgImagePattern(NVGcontext* ctx,
 }
 
 // Scissoring
-void nvgScissor(NVGcontext* ctx, float x, float y, float w, float h)
+static function nvgScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 
 	w = nvg__maxf(0.0f, w);
 	h = nvg__maxf(0.0f, h);
 
 	nvgTransformIdentity(state->scissor.xform);
-	state->scissor.xform[4] = x+w*0.5f;
-	state->scissor.xform[5] = y+h*0.5f;
-	nvgTransformMultiply(state->scissor.xform, state->xform);
+	state.scissor.xform[4] = x+w*0.5;
+	state.scissor.xform[5] = y+h*0.5;
+	nvgTransformMultiply(state.scissor.xform, state.xform);
 
-	state->scissor.extent[0] = w*0.5f;
-	state->scissor.extent[1] = h*0.5f;
+	state.scissor.extent[0] = w*0.5;
+	state.scissor.extent[1] = h*0.5;
 }
 
-static void nvg__isectRects(float* dst,
-							float ax, float ay, float aw, float ah,
-							float bx, float by, float bw, float bh)
+static function nvg__isectRects(dst: Array<Float>,
+							ax: Float, ay: Float, aw: Float, ah: Float,
+							bx: Float, by: Float, bw: Float, bh: Float): Void
 {
-	float minx = nvg__maxf(ax, bx);
-	float miny = nvg__maxf(ay, by);
-	float maxx = nvg__minf(ax+aw, bx+bw);
-	float maxy = nvg__minf(ay+ah, by+bh);
+	var minx: Float = nvg__maxf(ax, bx);
+	var miny: Float = nvg__maxf(ay, by);
+	var maxx: Float = nvg__minf(ax+aw, bx+bw);
+	var maxy: Float = nvg__minf(ay+ah, by+bh);
 	dst[0] = minx;
 	dst[1] = miny;
 	dst[2] = nvg__maxf(0.0f, maxx - minx);
 	dst[3] = nvg__maxf(0.0f, maxy - miny);
 }
 
-void nvgIntersectScissor(NVGcontext* ctx, float x, float y, float w, float h)
+static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
-	NVGstate* state = nvg__getState(ctx);
+	var state: NVGstate = nvg__getState(ctx);
 	float pxform[6], invxorm[6];
 	float rect[4];
-	float ex, ey, tex, tey;
+	var ex: Float; var ey: Float; var tex: Float; var tey: Float;
 
 	// If no previous scissor has been set, set the scissor as current scissor.
 	if (state->scissor.extent[0] < 0) {
@@ -997,36 +993,36 @@ void nvgIntersectScissor(NVGcontext* ctx, float x, float y, float w, float h)
 	nvgScissor(ctx, rect[0], rect[1], rect[2], rect[3]);
 }
 
-void nvgResetScissor(NVGcontext* ctx)
+static function nvgResetScissor(ctx: NVGcontext): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	memset(state->scissor.xform, 0, sizeof(state->scissor.xform));
-	state->scissor.extent[0] = -1.0f;
-	state->scissor.extent[1] = -1.0f;
+	var state: NVGstate = nvg__getState(ctx);
+	memset(state.scissor.xform, 0, sizeof(state.scissor.xform));
+	state.scissor.extent[0] = -1.0;
+	state.scissor.extent[1] = -1.0;
 }
 
 // Global composite operation.
-void nvgGlobalCompositeOperation(NVGcontext* ctx, int op)
+static function nvgGlobalCompositeOperation(ctx: NVGcontext, op: Int): Void
 {
-	NVGstate* state = nvg__getState(ctx);
-	state->compositeOperation = nvg__compositeOperationState(op);
+	var state: NVGstate = nvg__getState(ctx);
+	state.compositeOperation = nvg__compositeOperationState(op);
 }
 
-void nvgGlobalCompositeBlendFunc(NVGcontext* ctx, int sfactor, int dfactor)
+static function nvgGlobalCompositeBlendFunc(ctx: NVGcontext, sfactor: Int, dfactor: Int): Void
 {
 	nvgGlobalCompositeBlendFuncSeparate(ctx, sfactor, dfactor, sfactor, dfactor);
 }
 
-void nvgGlobalCompositeBlendFuncSeparate(NVGcontext* ctx, int srcRGB, int dstRGB, int srcAlpha, int dstAlpha)
+static function nvgGlobalCompositeBlendFuncSeparate(ctx: NVGcontext, srcRGB: Int, dstRGB: Int, srcAlpha: Int, dstAlpha: Int): Void
 {
-	NVGcompositeOperationState op;
+	var op: NVGcompositeOperationState;
 	op.srcRGB = srcRGB;
 	op.dstRGB = dstRGB;
 	op.srcAlpha = srcAlpha;
 	op.dstAlpha = dstAlpha;
 
-	NVGstate* state = nvg__getState(ctx);
-	state->compositeOperation = op;
+	var state: NVGstate = nvg__getState(ctx);
+	state.compositeOperation = op;
 }
 
 static int nvg__ptEquals(float x1, float y1, float x2, float y2, float tol)
