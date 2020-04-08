@@ -2069,13 +2069,15 @@ static function nvgArcTo(ctx: NVGcontext, x1: Float, y1: Float, x2: Float, y2: F
 
 static function nvgClosePath(ctx: NVGcontext): Void
 {
-	float vals[] = { NVG_CLOSE };
+	var vals = new Vector<Float>(1);
+	vals[0] = NVG_CLOSE;
 	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
 }
 
 static function nvgPathWinding(ctx: NVGcontext, dir: Int): Void
 {
-	float vals[] = { NVG_WINDING, (float)dir };
+	var vals = new Vector<Float>(2);
+	vals[0] = NVG_WINDING; vals[1] = Std.float(dir);
 	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
 }
 
@@ -2084,7 +2086,7 @@ static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Floa
 	var a: Float = 0; var da: Float = 0; var hda: Float = 0; var kappa: Float = 0;
 	var dx: Float = 0; var dy: Float = 0; var x: Float = 0; var y: Float = 0; var tanx: Float = 0; var tany: Float = 0;
 	var px: Float = 0; var py: Float = 0; var ptanx: Float = 0; var ptany: Float = 0;
-	float vals[3 + 5*7 + 100];
+	var vals = new Vector<Float>(3 + 5*7 + 100);
 	var i: Int; var ndivs: Int; var nvals: Int;
 	var move: Int = ctx.ncommands > 0 ? NVG_LINETO : NVG_MOVETO;
 
@@ -2094,27 +2096,27 @@ static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Floa
 		if (nvg__absf(da) >= NVG_PI*2) {
 			da = NVG_PI*2;
 		} else {
-			while (da < 0.0f) da += NVG_PI*2;
+			while (da < 0.0) da += NVG_PI*2;
 		}
 	} else {
 		if (nvg__absf(da) >= NVG_PI*2) {
 			da = -NVG_PI*2;
 		} else {
-			while (da > 0.0f) da -= NVG_PI*2;
+			while (da > 0.0) da -= NVG_PI*2;
 		}
 	}
 
 	// Split arc into max 90 degree segments.
-	ndivs = nvg__maxi(1, nvg__mini((int)(nvg__absf(da) / (NVG_PI*0.5f) + 0.5f), 5));
-	hda = (da / (float)ndivs) / 2.0f;
-	kappa = nvg__absf(4.0f / 3.0f * (1.0f - nvg__cosf(hda)) / nvg__sinf(hda));
+	ndivs = nvg__maxi(1, nvg__mini(Std.int(nvg__absf(da) / (NVG_PI*0.5) + 0.5), 5));
+	hda = (da / Std.float(ndivs)) / 2.0;
+	kappa = nvg__absf(4.0 / 3.0 * (1.0 - nvg__cosf(hda)) / nvg__sinf(hda));
 
 	if (dir == NVG_CCW)
 		kappa = -kappa;
 
 	nvals = 0;
-	for (i = 0; i <= ndivs; i++) {
-		a = a0 + da * (i/(float)ndivs);
+	for (i in 0...ndivs + 1) {
+		a = a0 + da * (i/Std.float(ndivs));
 		dx = nvg__cosf(a);
 		dy = nvg__sinf(a);
 		x = cx + dx*r;
@@ -2123,7 +2125,7 @@ static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Floa
 		tany = dx*r*kappa;
 
 		if (i == 0) {
-			vals[nvals++] = (float)move;
+			vals[nvals++] = Std.float(move);
 			vals[nvals++] = x;
 			vals[nvals++] = y;
 		} else {
@@ -2146,13 +2148,12 @@ static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Floa
 
 static function nvgRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
-	float vals[] = {
-		NVG_MOVETO, x,y,
-		NVG_LINETO, x,y+h,
-		NVG_LINETO, x+w,y+h,
-		NVG_LINETO, x+w,y,
-		NVG_CLOSE
-	};
+	var vals = new Vector<Float>(13);
+	vals[0] = NVG_MOVETO; vals[1] = x; vals[2] = y;
+	vals[3] = NVG_LINETO; vals[4] = x; vals[5] = y+h;
+	vals[6] = NVG_LINETO; vals[7] = x+w; vals[8] = y+h;
+	vals[9] = NVG_LINETO; vals[10] = x+w; vals[11] = y;
+	vals[12] = NVG_CLOSE;
 	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
 }
 
@@ -2167,38 +2168,36 @@ static function nvgRoundedRectVarying(ctx: NVGcontext, x: Float, y: Float, w: Fl
 		nvgRect(ctx, x, y, w, h);
 		return;
 	} else {
-		float halfw = nvg__absf(w)*0.5;
-		float halfh = nvg__absf(h)*0.5;
-		float rxBL = nvg__minf(radBottomLeft, halfw) * nvg__signf(w), ryBL = nvg__minf(radBottomLeft, halfh) * nvg__signf(h);
-		float rxBR = nvg__minf(radBottomRight, halfw) * nvg__signf(w), ryBR = nvg__minf(radBottomRight, halfh) * nvg__signf(h);
-		float rxTR = nvg__minf(radTopRight, halfw) * nvg__signf(w), ryTR = nvg__minf(radTopRight, halfh) * nvg__signf(h);
-		float rxTL = nvg__minf(radTopLeft, halfw) * nvg__signf(w), ryTL = nvg__minf(radTopLeft, halfh) * nvg__signf(h);
-		float vals[] = {
-			NVG_MOVETO, x, y + ryTL,
-			NVG_LINETO, x, y + h - ryBL,
-			NVG_BEZIERTO, x, y + h - ryBL*(1 - NVG_KAPPA90), x + rxBL*(1 - NVG_KAPPA90), y + h, x + rxBL, y + h,
-			NVG_LINETO, x + w - rxBR, y + h,
-			NVG_BEZIERTO, x + w - rxBR*(1 - NVG_KAPPA90), y + h, x + w, y + h - ryBR*(1 - NVG_KAPPA90), x + w, y + h - ryBR,
-			NVG_LINETO, x + w, y + ryTR,
-			NVG_BEZIERTO, x + w, y + ryTR*(1 - NVG_KAPPA90), x + w - rxTR*(1 - NVG_KAPPA90), y, x + w - rxTR, y,
-			NVG_LINETO, x + rxTL, y,
-			NVG_BEZIERTO, x + rxTL*(1 - NVG_KAPPA90), y, x, y + ryTL*(1 - NVG_KAPPA90), x, y + ryTL,
-			NVG_CLOSE
-		};
+		var halfw: Float = nvg__absf(w)*0.5;
+		var halfh: Float = nvg__absf(h)*0.5;
+		var rxBL: Float = nvg__minf(radBottomLeft, halfw) * nvg__signf(w), ryBL = nvg__minf(radBottomLeft, halfh) * nvg__signf(h);
+		var rxBR: Float = nvg__minf(radBottomRight, halfw) * nvg__signf(w), ryBR = nvg__minf(radBottomRight, halfh) * nvg__signf(h);
+		var rxTR: Float = nvg__minf(radTopRight, halfw) * nvg__signf(w), ryTR = nvg__minf(radTopRight, halfh) * nvg__signf(h);
+		var rxTL: Float = nvg__minf(radTopLeft, halfw) * nvg__signf(w), ryTL = nvg__minf(radTopLeft, halfh) * nvg__signf(h);
+		var vals = new Vector<Float>(44);
+		vals[0] = NVG_MOVETO; vals[1] = x; vals[2] = y + ryTL;
+		vals[3] = NVG_LINETO; vals[4] = x; vals[5] = y + h - ryBL;
+		vals[6] = NVG_BEZIERTO; vals[7] = x; vals[8] = y + h - ryBL*(1 - NVG_KAPPA90); vals[9] = x + rxBL*(1 - NVG_KAPPA90); vals[10] = y + h; vals[11] = x + rxBL; vals[12] = y + h;
+		vals[13] = NVG_LINETO; vals[14] = x + w - rxBR; vals[15] = y + h;
+		vals[16] = NVG_BEZIERTO; vals[17] = x + w - rxBR*(1 - NVG_KAPPA90); vals[18] = y + h; vals[19] = x + w; vals[20] = y + h - ryBR*(1 - NVG_KAPPA90); vals[21] = x + w; vals[22] = y + h - ryBR;
+		vals[23] = NVG_LINETO; vals[24] = x + w;vals[25] = y + ryTR;
+		vals[26] = NVG_BEZIERTO; vals[27] = x + w; vals[28] = y + ryTR*(1 - NVG_KAPPA90); vals[29] = x + w - rxTR*(1 - NVG_KAPPA90); vals[30] = y; vals[31] = x + w - rxTR; vals[32] = y;
+		vals[33] = NVG_LINETO; vals[34] = x + rxTL; vals[35] = y;
+		vals[36] = NVG_BEZIERTO; vals[37] = x + rxTL*(1 - NVG_KAPPA90); vals[38] = y; vals[39] = x; vals[40] = y + ryTL*(1 - NVG_KAPPA90); vals[41] = x; vals[42] = y + ryTL;
+		vals[43] = NVG_CLOSE;
 		nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
 	}
 }
 
 static function nvgEllipse(ctx: NVGcontext, cx: Float, cy: Float, rx: Float, ry: Float): Void
 {
-	float vals[] = {
-		NVG_MOVETO, cx-rx, cy,
-		NVG_BEZIERTO, cx-rx, cy+ry*NVG_KAPPA90, cx-rx*NVG_KAPPA90, cy+ry, cx, cy+ry,
-		NVG_BEZIERTO, cx+rx*NVG_KAPPA90, cy+ry, cx+rx, cy+ry*NVG_KAPPA90, cx+rx, cy,
-		NVG_BEZIERTO, cx+rx, cy-ry*NVG_KAPPA90, cx+rx*NVG_KAPPA90, cy-ry, cx, cy-ry,
-		NVG_BEZIERTO, cx-rx*NVG_KAPPA90, cy-ry, cx-rx, cy-ry*NVG_KAPPA90, cx-rx, cy,
-		NVG_CLOSE
-	};
+	var vals = new Vector<Float>(32);
+	vals[0] = NVG_MOVETO; vals[1] = cx-rx; vals[2] = cy;
+	vals[3] = NVG_BEZIERTO; vals[4] = cx-rx; vals[5] = cy+ry*NVG_KAPPA90; vals[6] = cx-rx*NVG_KAPPA90; vals[7] = cy+ry; vals[8] = cx; vals[9] = cy+ry;
+	vals[10] = NVG_BEZIERTO; vals[11] = cx+rx*NVG_KAPPA90; vals[12] = cy+ry; vals[13] = cx+rx; vals[14] = cy+ry*NVG_KAPPA90; vals[15] = cx+rx; vals[16] = cy;
+	vals[17] = NVG_BEZIERTO; vals[18] = cx+rx; vals[19] = cy-ry*NVG_KAPPA90; vals[20] = cx+rx*NVG_KAPPA90; vals[21] = cy-ry; vals[22] = cx; vals[23] = cy-ry;
+	vals[24] = NVG_BEZIERTO; vals[25] = cx-rx*NVG_KAPPA90; vals[26] = cy-ry; vals[27] = cx-rx; vals[28] = cy-ry*NVG_KAPPA90; vals[29] = cx-rx; vals[30] = cy;
+	vals[31] = NVG_CLOSE;
 	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
 }
 
@@ -2214,7 +2213,7 @@ static function nvgDebugDumpPathCache(ctx: NVGcontext): Void
 
 	printf("Dumping %d cached paths\n", ctx->cache->npaths);
 	for (i in 0...ctx.cache.npaths) {
-		path = &ctx.cache.paths[i];
+		path = ctx.cache.paths[i];
 		printf(" - Path %d\n", i);
 		if (path.nfill) {
 			printf("   - fill: %d\n", path.nfill);
@@ -2238,20 +2237,20 @@ static function nvgFill(ctx: NVGcontext): Void
 
 	nvg__flattenPaths(ctx);
 	if (ctx.params.edgeAntiAlias && state.shapeAntiAlias)
-		nvg__expandFill(ctx, ctx.fringeWidth, NVG_MITER, 2.4f);
+		nvg__expandFill(ctx, ctx.fringeWidth, NVG_MITER, 2.4);
 	else
-		nvg__expandFill(ctx, 0.0f, NVG_MITER, 2.4f);
+		nvg__expandFill(ctx, 0.0, NVG_MITER, 2.4);
 
 	// Apply global alpha
 	fillPaint.innerColor.a *= state.alpha;
 	fillPaint.outerColor.a *= state.alpha;
 
-	ctx.params.renderFill(ctx.params.userPtr, &fillPaint, state.compositeOperation, &state.scissor, ctx.fringeWidth,
+	ctx.params.renderFill(ctx.params.userPtr, fillPaint, state.compositeOperation, state.scissor, ctx.fringeWidth,
 						   ctx.cache.bounds, ctx.cache.paths, ctx.cache.npaths);
 
 	// Count triangles
 	for (i in 0...ctx.cache.npaths) {
-		path = &ctx.cache.paths[i];
+		path = ctx.cache.paths[i];
 		ctx.fillTriCount += path.nfill-2;
 		ctx.fillTriCount += path.nstroke-2;
 		ctx.drawCallCount += 2;
@@ -2271,7 +2270,7 @@ static function nvgStroke(ctx: NVGcontext): Void
 	if (strokeWidth < ctx.fringeWidth) {
 		// If the stroke width is less than pixel size, use alpha to emulate coverage.
 		// Since coverage is area, scale by alpha*alpha.
-		float alpha = nvg__clampf(strokeWidth / ctx.fringeWidth, 0.0f, 1.0f);
+		var alpha: Float = nvg__clampf(strokeWidth / ctx.fringeWidth, 0.0, 1.0);
 		strokePaint.innerColor.a *= alpha*alpha;
 		strokePaint.outerColor.a *= alpha*alpha;
 		strokeWidth = ctx.fringeWidth;
@@ -2288,12 +2287,12 @@ static function nvgStroke(ctx: NVGcontext): Void
 	else
 		nvg__expandStroke(ctx, strokeWidth*0.5, 0.0, state.lineCap, state.lineJoin, state.miterLimit);
 
-	ctx.params.renderStroke(ctx.params.userPtr, &strokePaint, state.compositeOperation, &state.scissor, ctx.fringeWidth,
+	ctx.params.renderStroke(ctx.params.userPtr, strokePaint, state.compositeOperation, state.scissor, ctx.fringeWidth,
 							 strokeWidth, ctx.cache.paths, ctx.cache.npaths);
 
 	// Count triangles
 	for (i in 0...ctx.cache.npaths) {
-		path = &ctx.cache.paths[i];
+		path = ctx.cache.paths[i];
 		ctx.strokeTriCount += path.nstroke-2;
 		ctx.drawCallCount++;
 	}
@@ -2403,14 +2402,14 @@ static function nvg__getFontScale(state: NVGstate): Float
 
 static function nvg__flushTextTexture(ctx: NVGcontext): Void
 {
-	int dirty[4];
+	var dirty = new Vector<Int>(4);
 
 	if (fonsValidateTexture(ctx.fs, dirty)) {
 		var fontImage: Int = ctx.fontImages[ctx.fontImageIdx];
 		// Update texture
 		if (fontImage != 0) {
 			var iw: Int; var ih: Int;
-			var data: Array<Int> = fonsGetTextureData(ctx->fs, &iw, &ih);
+			var data: Array<Int> = fonsGetTextureData(ctx->fs, new Ref<Int>(iw), new Ref<Int>(ih));
 			var x: Int = dirty[0];
 			var y: Int = dirty[1];
 			var w: Int = dirty[2] - dirty[0];
@@ -2428,9 +2427,9 @@ static function nvg__allocTextAtlas(ctx: NVGcontext): Int
 		return 0;
 	// if next fontImage already have a texture
 	if (ctx.fontImages[ctx.fontImageIdx+1] != 0)
-		nvgImageSize(ctx, ctx.fontImages[ctx.fontImageIdx+1], &iw, &ih);
+		nvgImageSize(ctx, ctx.fontImages[ctx.fontImageIdx+1], new Ref<Int>(iw), new Ref<Int>(ih));
 	else { // calculate the new font image size and create it.
-		nvgImageSize(ctx, ctx.fontImages[ctx.fontImageIdx], &iw, &ih);
+		nvgImageSize(ctx, ctx.fontImages[ctx.fontImageIdx], new Ref<Int>(iw), new Ref<Int>(ih));
 		if (iw > ih)
 			ih *= 2;
 		else
@@ -2456,7 +2455,7 @@ static function nvg__renderText(ctx: NVGcontext, verts: Array<NVGvertex>, nverts
 	paint.innerColor.a *= state.alpha;
 	paint.outerColor.a *= state.alpha;
 
-	ctx.params.renderTriangles(ctx.params.userPtr, &paint, state.compositeOperation, &state.scissor, verts, nverts, ctx.fringeWidth);
+	ctx.params.renderTriangles(ctx.params.userPtr, paint, state.compositeOperation, state.scissor, verts, nverts, ctx.fringeWidth);
 
 	ctx.drawCallCount++;
 	ctx.textTriCount += nverts/3;
@@ -2486,12 +2485,12 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 
 	cverts = nvg__maxi(2, (int)(end - string)) * 6; // conservative estimate.
 	verts = nvg__allocTempVerts(ctx, cverts);
-	if (verts == NULL) return x;
+	if (verts == null) return x;
 
-	fonsTextIterInit(ctx.fs, &iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_REQUIRED);
+	fonsTextIterInit(ctx.fs, iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_REQUIRED);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx.fs, &iter, &q)) {
-		float c[4*2];
+	while (fonsTextIterNext(ctx.fs, iter, q)) {
+		var c = new Vector<Float>(4*2);
 		if (iter.prevGlyphIndex == -1) { // can not retrieve glyph?
 			if (nverts != 0) {
 				nvg__renderText(ctx, verts, nverts);
@@ -2500,24 +2499,24 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 			if (!nvg__allocTextAtlas(ctx))
 				break; // no memory :(
 			iter = prevIter;
-			fonsTextIterNext(ctx.fs, &iter, &q); // try again
+			fonsTextIterNext(ctx.fs, iter, q); // try again
 			if (iter.prevGlyphIndex == -1) // still can not find glyph?
 				break;
 		}
 		prevIter = iter;
 		// Transform corners.
-		nvgTransformPoint(&c[0],&c[1], state.xform, q.x0*invscale, q.y0*invscale);
-		nvgTransformPoint(&c[2],&c[3], state.xform, q.x1*invscale, q.y0*invscale);
-		nvgTransformPoint(&c[4],&c[5], state.xform, q.x1*invscale, q.y1*invscale);
-		nvgTransformPoint(&c[6],&c[7], state.xform, q.x0*invscale, q.y1*invscale);
+		nvgTransformPoint(new Ref<Float>(c[0]),new Ref<Float>(c[1]), state.xform, q.x0*invscale, q.y0*invscale);
+		nvgTransformPoint(new Ref<Float>(c[2]),new Ref<Float>(c[3]), state.xform, q.x1*invscale, q.y0*invscale);
+		nvgTransformPoint(new Ref<Float>(c[4]),new Ref<Float>(c[5]), state.xform, q.x1*invscale, q.y1*invscale);
+		nvgTransformPoint(new Ref<Float>(c[6]),new Ref<Float>(c[7]), state.xform, q.x0*invscale, q.y1*invscale);
 		// Create triangles
 		if (nverts+6 <= cverts) {
-			nvg__vset(&verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
-			nvg__vset(&verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
-			nvg__vset(&verts[nverts], c[2], c[3], q.s1, q.t0); nverts++;
-			nvg__vset(&verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
-			nvg__vset(&verts[nverts], c[6], c[7], q.s0, q.t1); nverts++;
-			nvg__vset(&verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
+			nvg__vset(verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
+			nvg__vset(verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
+			nvg__vset(verts[nverts], c[2], c[3], q.s1, q.t0); nverts++;
+			nvg__vset(verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
+			nvg__vset(verts[nverts], c[6], c[7], q.s0, q.t1); nverts++;
+			nvg__vset(verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
 		}
 	}
 
@@ -2532,7 +2531,7 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 static function nvgTextBox(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: String, end: String): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
-	NVGtextRow rows[2];
+	var rows = new Vector<NVGtextRow>(2);
 	var nrows: Int = 0; var i: Int;
 	var oldAlign: Int = state.textAlign;
 	var haling: Int = state.textAlign & (NVG_ALIGN_LEFT | NVG_ALIGN_CENTER | NVG_ALIGN_RIGHT);
@@ -2541,13 +2540,13 @@ static function nvgTextBox(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: F
 
 	if (state.fontId == FONS_INVALID) return;
 
-	nvgTextMetrics(ctx, NULL, NULL, &lineh);
+	nvgTextMetrics(ctx, NULL, NULL, lineh);
 
 	state.textAlign = NVG_ALIGN_LEFT | valign;
 
 	while ((nrows = nvgTextBreakLines(ctx, string, end, breakRowWidth, rows, 2))) {
-		for (i = 0; i < nrows; i++) {
-			NVGtextRow* row = &rows[i];
+		for (i in 0...nrows) {
+			var row: NVGtextRow = rows[i];
 			if (haling & NVG_ALIGN_LEFT)
 				nvgText(ctx, x, y, row.start, row.end);
 			else if (haling & NVG_ALIGN_CENTER)
@@ -2585,12 +2584,12 @@ static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, strin
 	fonsSetAlign(ctx.fs, state.textAlign);
 	fonsSetFont(ctx.fs, state.fontId);
 
-	fonsTextIterInit(ctx.fs, &iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
+	fonsTextIterInit(ctx.fs, iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx.fs, &iter, &q)) {
+	while (fonsTextIterNext(ctx.fs, iter, q)) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?
 			iter = prevIter;
-			fonsTextIterNext(ctx.fs, &iter, &q); // try again
+			fonsTextIterNext(ctx.fs, iter, q); // try again
 		}
 		prevIter = iter;
 		positions[npos].str = iter.str;
@@ -2644,12 +2643,12 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 
 	breakRowWidth *= scale;
 
-	fonsTextIterInit(ctx.fs, &iter, 0, 0, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
+	fonsTextIterInit(ctx.fs, iter, 0, 0, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx->fs, &iter, &q)) {
+	while (fonsTextIterNext(ctx.fs, iter, q)) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?
 			iter = prevIter;
-			fonsTextIterNext(ctx->fs, &iter, &q); // try again
+			fonsTextIterNext(ctx.fs, iter, q); // try again
 		}
 		prevIter = iter;
 		switch (iter.codepoint) {
@@ -2722,7 +2721,7 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 					breakMaxX = 0.0;
 				}
 			} else {
-				float nextWidth = iter.nextx - rowStartX;
+				var nextWidth: Float = iter.nextx - rowStartX;
 
 				// track last non-white space character
 				if (type == NVG_CHAR || type == NVG_CJK_CHAR) {
@@ -2829,7 +2828,7 @@ static function nvgTextBounds(ctx: NVGcontext, x: Float, y: Float, string: Strin
 	width = fonsTextBounds(ctx.fs, x*scale, y*scale, string, end, bounds);
 	if (bounds != null) {
 		// Use line bounds for height.
-		fonsLineBounds(ctx.fs, y*scale, &bounds[1], &bounds[3]);
+		fonsLineBounds(ctx.fs, y*scale, new Ref<Float>(bounds[1]), new Ref<Float>(bounds[3]));
 		bounds[0] *= invscale;
 		bounds[1] *= invscale;
 		bounds[2] *= invscale;
@@ -2841,7 +2840,7 @@ static function nvgTextBounds(ctx: NVGcontext, x: Float, y: Float, string: Strin
 static function nvgTextBoxBounds(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: String, end: String, bounds: Array<Float>): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
-	NVGtextRow rows[2];
+	var rows = new Vector<NVGtextRow>(2);
 	var scale: Float = nvg__getFontScale(state) * ctx->devicePxRatio;
 	var invscale: Float = 1.0 / scale;
 	var nrows: Int = 0; // var i: Int;
@@ -2853,11 +2852,11 @@ static function nvgTextBoxBounds(ctx: NVGcontext, x: Float, y: Float, breakRowWi
 
 	if (state.fontId == FONS_INVALID) {
 		if (bounds != null)
-			bounds[0] = bounds[1] = bounds[2] = bounds[3] = 0.0f;
+			bounds[0] = bounds[1] = bounds[2] = bounds[3] = 0.0;
 		return;
 	}
 
-	nvgTextMetrics(ctx, null, null, &lineh);
+	nvgTextMetrics(ctx, null, null, new Ref<Float>(lineh));
 
 	state.textAlign = NVG_ALIGN_LEFT | valign;
 
@@ -2869,19 +2868,19 @@ static function nvgTextBoxBounds(ctx: NVGcontext, x: Float, y: Float, breakRowWi
 	fonsSetBlur(ctx.fs, state.fontBlur*scale);
 	fonsSetAlign(ctx.fs, state.textAlign);
 	fonsSetFont(ctx.fs, state.fontId);
-	fonsLineBounds(ctx.fs, 0, &rminy, &rmaxy);
+	fonsLineBounds(ctx.fs, 0, new Ref<Float>(rminy), new Ref<Float>(rmaxy));
 	rminy *= invscale;
 	rmaxy *= invscale;
 
 	while ((nrows = nvgTextBreakLines(ctx, string, end, breakRowWidth, rows, 2))) {
 		for (i in 0...nrows) {
-			var row: NVGtextRow = &rows[i];
+			var row: NVGtextRow = rows[i];
 			var rminx: Float; var rmaxx: Float; var dx: Float = 0;
 			// Horizontal bounds
 			if (haling & NVG_ALIGN_LEFT)
 				dx = 0;
 			else if (haling & NVG_ALIGN_CENTER)
-				dx = breakRowWidth*0.5f - row.width*0.5f;
+				dx = breakRowWidth*0.5 - row.width*0.5;
 			else if (haling & NVG_ALIGN_RIGHT)
 				dx = breakRowWidth - row.width;
 			rminx = x + row.minx + dx;
@@ -2923,11 +2922,11 @@ static function nvgTextMetrics(ctx: NVGcontext, ascender: Ref<Float>, descender:
 
 	fonsVertMetrics(ctx.fs, ascender, descender, lineh);
 	if (ascender != null)
-		*ascender *= invscale;
+		ascender.value *= invscale;
 	if (descender != null)
-		*descender *= invscale;
+		descender.value *= invscale;
 	if (lineh != null)
-		*lineh *= invscale;
+		lineh.value *= invscale;
 }
 // vim: ft=c nu noet ts=4
 }
