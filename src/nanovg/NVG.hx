@@ -28,6 +28,171 @@ class Ref<T> {
 	}
 }
 
+class NVGcolor {
+	public var r: Float;
+	public var g: Float;
+	public var b: Float;
+	public var a: Float;
+
+	public function new() {
+		r = g = b = a = 0;
+	}
+}
+
+class NVGpaint {
+	public var xform: Vector<Float>;
+	public var extent: Vector<Float>;
+	public var radius: Float;
+	public var feather: Float;
+	public var innerColor: NVGcolor;
+	public var outerColor: NVGcolor;
+	public var image: Int;
+
+	public function new() {
+		xform = new Vector<Float>(6);
+		extent = new Vector<Float>(2);
+		innerColor = new NVGcolor();
+		outerColor = new NVGcolor();
+	}
+}
+
+enum abstract NVGwinding(Int) {
+	var NVG_CCW = 1;			// Winding for solid shapes
+	var NVG_CW = 2;				// Winding for holes
+}
+
+enum abstract NVGsolidity(Int) {
+	var NVG_SOLID = 1;			// CCW
+	var NVG_HOLE = 2;			// CW
+}
+
+enum abstract NVGlineCap(Int) {
+	var NVG_BUTT;
+	var NVG_ROUND;
+	var NVG_SQUARE;
+	var NVG_BEVEL;
+	var NVG_MITER;
+}
+
+enum abstract NVGalign(Int) {
+	// Horizontal align
+	var NVG_ALIGN_LEFT 		= 1<<0;	// Default, align text horizontally to left.
+	var NVG_ALIGN_CENTER 	= 1<<1;	// Align text horizontally to center.
+	var NVG_ALIGN_RIGHT 	= 1<<2;	// Align text horizontally to right.
+	// Vertical align
+	var NVG_ALIGN_TOP 		= 1<<3;	// Align text vertically to top.
+	var NVG_ALIGN_MIDDLE	= 1<<4;	// Align text vertically to middle.
+	var NVG_ALIGN_BOTTOM	= 1<<5;	// Align text vertically to bottom.
+	var NVG_ALIGN_BASELINE	= 1<<6; // Default, align text vertically to baseline.
+}
+
+enum abstract NVGblendFactor(Int) {
+	var NVG_ZERO = 1<<0;
+	var NVG_ONE = 1<<1;
+	var NVG_SRC_COLOR = 1<<2;
+	var NVG_ONE_MINUS_SRC_COLOR = 1<<3;
+	var NVG_DST_COLOR = 1<<4;
+	var NVG_ONE_MINUS_DST_COLOR = 1<<5;
+	var NVG_SRC_ALPHA = 1<<6;
+	var NVG_ONE_MINUS_SRC_ALPHA = 1<<7;
+	var NVG_DST_ALPHA = 1<<8;
+	var NVG_ONE_MINUS_DST_ALPHA = 1<<9;
+	var NVG_SRC_ALPHA_SATURATE = 1<<10;
+}
+
+enum abstract NVGcompositeOperation(Int) {
+	var NVG_SOURCE_OVER;
+	var NVG_SOURCE_IN;
+	var NVG_SOURCE_OUT;
+	var NVG_ATOP;
+	var NVG_DESTINATION_OVER;
+	var NVG_DESTINATION_IN;
+	var NVG_DESTINATION_OUT;
+	var NVG_DESTINATION_ATOP;
+	var NVG_LIGHTER;
+	var NVG_COPY;
+	var NVG_XOR;
+}
+
+class NVGcompositeOperationState {
+	public var srcRGB: Int;
+	public var dstRGB: Int;
+	public var srcAlpha: Int;
+	public var dstAlpha: Int;
+}
+
+class NVGglyphPosition {
+	public var str: String;	// Position of the glyph in the input string.
+	public var x: Float;			// The x-coordinate of the logical glyph position.
+	public var minx: Float; public var maxx: Float;	// The bounds of the glyph shape.
+}
+
+class NVGtextRow {
+	public var start: String;	// Pointer to the input text where the row starts.
+	public var end: String;	// Pointer to the input text where the row ends (one past the last character).
+	public var next: String;	// Pointer to the beginning of the next row.
+	public var width: Float;		// Logical width of the row.
+	public var minx: Float; public var maxx: Float;	// Actual bounds of the row. Logical with and bounds can differ because of kerning and some parts over extending.
+}
+
+enum abstract NVGimageFlags(Int) {
+    var NVG_IMAGE_GENERATE_MIPMAPS	= 1<<0;     // Generate mipmaps during creation of the image.
+	var NVG_IMAGE_REPEATX			= 1<<1;		// Repeat image in X direction.
+	var NVG_IMAGE_REPEATY			= 1<<2;		// Repeat image in Y direction.
+	var NVG_IMAGE_FLIPY				= 1<<3;		// Flips (inverses) image in Y direction when rendered.
+	var NVG_IMAGE_PREMULTIPLIED		= 1<<4;		// Image data has premultiplied alpha.
+	var NVG_IMAGE_NEAREST			= 1<<5;		// Image interpolation is Nearest instead Linear
+}
+
+enum abstract NVGtexture(Int) {
+	var NVG_TEXTURE_ALPHA = 0x01;
+	var NVG_TEXTURE_RGBA = 0x02;
+}
+
+class NVGscissor {
+	public var xform: Vector<Float>;
+	public var extent: Vector<Float>;
+
+	public function new() {
+		xform = new Vector<Float>(6);
+		extent = new Vector<Float>(2);
+	}
+}
+
+class NVGvertex {
+	public var x: Float; public var y: Float; public var u: Float; public var v: Float;
+}
+
+class NVGpath {
+	public var first: Int;
+	public var count: Int;
+	public var closed: Int;
+	public var nbevel: Int;
+	public var fill: NVGvertex;
+	public var nfill: Int;
+	public var stroke: NVGvertex;
+	public var nstroke: Int;
+	public var winding: Int;
+	public var convex: Int;
+}
+
+class NVGparams {
+	public var userPtr: Dynamic;
+	public var edgeAntiAlias: Int;
+	public function renderCreate(uptr: Dynamic): Int { return 0; }
+	public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int { return 0; }
+	public function renderDeleteTexture(uptr: Dynamic, image: Int): Int { return 0; }
+	public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: Array<Int>): Int { return 0; }
+	public function renderGetTextureSize(uptr: Dynamic, image: Int, w: Ref<Int>, h: Ref<Int>): Int { return 0; }
+	public function renderViewport(uptr: Dynamic, width: Float, height: Float, devicePixelRatio: Float): Void {}
+	public function renderCancel(uptr: Dynamic): Void {}
+	public function renderFlush(uptr: Dynamic): Void {}
+	public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Array<Float>, paths: NVGpath, npaths: Int): Void {}
+	public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: NVGpath, npaths: Int): Void {}
+	public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: NVGvertex, nverts: Int, fringe: Float): Void {}
+	public function renderDelete(uptr: Dynamic): Void {}
+}
+
 enum abstract NVGcommands(Int) {
 	var NVG_MOVETO = 0;
 	var NVG_LINETO = 1;
@@ -53,12 +218,12 @@ class NVGstate {
 	public var lineJoin: Int;
 	public var lineCap: Int;
 	public var alpha: Float;
-	public var xform_0;
-	public var xform_1;
-	public var xform_2;
-	public var xform_3;
-	public var xform_4;
-	public var xform_5;
+	public var xform_0: Float;
+	public var xform_1: Float;
+	public var xform_2: Float;
+	public var xform_3: Float;
+	public var xform_4: Float;
+	public var xform_5: Float;
 	public var scissor: NVGscissor;
 	public var fontSize: Float;
 	public var letterSpacing: Float;
@@ -2604,7 +2769,7 @@ static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, strin
 	return npos;
 }
 
-static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, breakRowWidth: Float, rows: Array<NVGtextRow>, maxRows: Int): Int
+static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, breakRowWidth: Float, rows: Vector<NVGtextRow>, maxRows: Int): Int
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var scale: Float = nvg__getFontScale(state) * ctx->devicePxRatio;
