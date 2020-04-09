@@ -186,7 +186,7 @@ class NVGpath {
 	public var nbevel: Int;
 	public var fill: NVGvertex;
 	public var nfill: Int;
-	public var stroke: NVGvertex;
+	public var stroke: Vector<NVGvertex>;
 	public var nstroke: Int;
 	public var winding: Int;
 	public var convex: Bool;
@@ -203,7 +203,7 @@ class NVGparams {
 	public function renderViewport(uptr: Dynamic, width: Float, height: Float, devicePixelRatio: Float): Void {}
 	public function renderCancel(uptr: Dynamic): Void {}
 	public function renderFlush(uptr: Dynamic): Void {}
-	public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Array<Float>, paths: Vector<NVGpath>, npaths: Int): Void {}
+	public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {}
 	public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {}
 	public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: NVGvertex, nverts: Int, fringe: Float): Void {}
 	public function renderDelete(uptr: Dynamic): Void {}
@@ -277,12 +277,11 @@ class NVGpathCache {
 	public var verts: Vector<NVGvertex>;
 	public var nverts: Int;
 	public var cverts: Int;
-	public var bounds_0: Float;
-	public var bounds_1: Float;
-	public var bounds_2: Float;
-	public var bounds_3: Float;
+	public var bounds: Vector<Float>;
 
-	public function new() {}
+	public function new() {
+		bounds = new Vector<Float>(4);
+	}
 }
 
 class NVGcontext {
@@ -317,6 +316,8 @@ enum abstract NVGcodepointType(Int) from Int to Int {
 }
 
 class NVG {
+static final NVG_PI = 3.14159265358979323846264338327;
+
 static final NVG_INIT_FONTIMAGE_SIZE = 512;
 static final NVG_MAX_FONTIMAGE_SIZE = 2048;
 static final NVG_MAX_FONTIMAGES = 4;
@@ -331,13 +332,14 @@ static final NVG_KAPPA90 = 0.5522847493; // Length proportional to radius of a c
 
 // static function NVG_COUNTOF(arr) { return (sizeof(arr) / sizeof(0[arr])); }
 
-static function nvg__sqrtf(a: Float): Float { return Math.sqrt(a); }
+public static function nvg__sqrtf(a: Float): Float { return Math.sqrt(a); }
 static function nvg__modf(a: Float, b: Float): Float { return a % b; }
 static function nvg__sinf(a: Float): Float { return Math.sin(a); }
 static function nvg__cosf(a: Float): Float { return Math.cos(a); }
 static function nvg__tanf(a: Float): Float { return Math.tan(a); }
 static function nvg__atan2f(a: Float, b: Float): Float { return Math.atan2(a, b); }
 static function nvg__acosf(a: Float): Float { return Math.acos(a); }
+static function nvg__ceilf(a: Float): Float { return Math.ceil(a); }
 
 static function nvg__mini(a: Int, b: Int): Int { return a < b ? a : b; }
 static function nvg__maxi(a: Int, b: Int): Int { return a > b ? a : b; }
@@ -541,8 +543,8 @@ static function nvgDeleteInternal(ctx: NVGcontext): Void
 	// if (ctx->commands != null) free(ctx->commands);
 	if (ctx.cache != null) nvg__deletePathCache(ctx.cache);
 
-	if (ctx.fs)
-		fonsDeleteInternal(ctx->fs);
+	if (ctx.fs != null)
+		fonsDeleteInternal(ctx.fs);
 
 	for (i in 0...NVG_MAX_FONTIMAGES) {
 		if (ctx.fontImages[i] != 0) {
@@ -661,13 +663,16 @@ static function nvgLerpRGBA(c0: NVGcolor, c1: NVGcolor, u: Float): NVGcolor
 {
 	// var i: Int;
 	var oneminu: Float;
-	var cint: NVGcolor = new NVGcolor(0);
+	var cint: NVGcolor = new NVGcolor();
 
 	u = nvg__clampf(u, 0.0, 1.0);
 	oneminu = 1.0 - u;
-	for( i in 0...4 )
+	// for( i in 0...4 )
 	{
-		cint.rgba[i] = c0.rgba[i] * oneminu + c1.rgba[i] * u;
+		cint.r = c0.r * oneminu + c1.r * u;
+		cint.g = c0.g * oneminu + c1.g * u;
+		cint.b = c0.b * oneminu + c1.b * u;
+		cint.a = c0.a * oneminu + c1.a * u;
 	}
 
 	return cint;
@@ -959,7 +964,9 @@ static function nvgCurrentTransform(ctx: NVGcontext, xform: Array<Float>): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	if (xform == null) return;
-	state.xform.copyTo(xform);
+	for (i in 0...state.xform.length) {
+		xform[i] = state.xform[i];
+	}
 }
 
 static function nvgStrokeColor(ctx: NVGcontext, color: NVGcolor): Void
@@ -992,15 +999,15 @@ static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: In
 {
 	var w: Int; var h: Int; var n: Int; var image: Int;
 	var img: Array<Int>;
-	stbi_set_unpremultiply_on_load(1);
-	stbi_convert_iphone_png_to_rgb(1);
+	// stbi_set_unpremultiply_on_load(1);
+	// stbi_convert_iphone_png_to_rgb(1);
 	img = stbi_load(filename, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
 	if (img == null) {
 //		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
 		return 0;
 	}
 	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
+	// stbi_image_free(img);
 	return image;
 }
 
@@ -1013,7 +1020,7 @@ static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<
 		return 0;
 	}
 	image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-	stbi_image_free(img);
+	// stbi_image_free(img);
 	return image;
 }
 
@@ -1170,7 +1177,7 @@ static function nvgScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Flo
 	state.scissor.extent[1] = h*0.5;
 }
 
-static function nvg__isectRects(dst: Array<Float>,
+static function nvg__isectRects(dst: Vector<Float>,
 							ax: Float, ay: Float, aw: Float, ah: Float,
 							bx: Float, by: Float, bw: Float, bh: Float): Void
 {
@@ -1199,7 +1206,9 @@ static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Floa
 
 	// Transform the current scissor rect into current transform space.
 	// If there is difference in rotation, this will be approximation.
-	state.scissor.xform.copyTo(pxform);
+	for (i in 0...state.scissor.xform.length) {
+		pxform[i] = state.scissor.xform[i];
+	}
 	ex = state.scissor.extent[0];
 	ey = state.scissor.extent[1];
 	nvgTransformInverse(invxorm, state.xform);
@@ -1216,7 +1225,9 @@ static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Floa
 static function nvgResetScissor(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
-	state.scissor.xform.nullify();
+	for (i in 0...state.scissor.xform.length) {
+		state.scissor.xform[i] = 0;
+	}
 	state.scissor.extent[0] = -1.0;
 	state.scissor.extent[1] = -1.0;
 }
@@ -1413,7 +1424,7 @@ static function nvg__pathWinding(ctx: NVGcontext, winding: Int): Void
 	path.winding = winding;
 }
 
-static function nvg__getAverageScale(t: Array<Float>): Float
+static function nvg__getAverageScale(t: Vector<Float>): Float
 {
 	var sx: Float = nvg__sqrtf(t[0]*t[0] + t[2]*t[2]);
 	var sy: Float = nvg__sqrtf(t[1]*t[1] + t[3]*t[3]);
@@ -1578,8 +1589,8 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 		}
 	}
 
-	cache.bounds_0 = cache.bounds_1 = 1e6;
-	cache.bounds_2 = cache.bounds_3 = -1e6;
+	cache.bounds[0] = cache.bounds[1] = 1e6;
+	cache.bounds[2] = cache.bounds[3] = -1e6;
 
 	// Calculate the direction and length of line segments.
 	for (j in 0...cache.npaths) {
@@ -1610,10 +1621,10 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 			p0.dy = p1.y - p0.y;
 			p0.len = nvg__normalize(new Ref<Float>(p0.dx), new Ref<Float>(p0.dy));
 			// Update bounds
-			cache.bounds_0 = nvg__minf(cache.bounds_0, p0.x);
-			cache.bounds_1 = nvg__minf(cache.bounds_1, p0.y);
-			cache.bounds_2 = nvg__maxf(cache.bounds_2, p0.x);
-			cache.bounds_3 = nvg__maxf(cache.bounds_3, p0.y);
+			cache.bounds[0] = nvg__minf(cache.bounds[0], p0.x);
+			cache.bounds[1] = nvg__minf(cache.bounds[1], p0.y);
+			cache.bounds[2] = nvg__maxf(cache.bounds[2], p0.x);
+			cache.bounds[3] = nvg__maxf(cache.bounds[3], p0.y);
 			// Advance
 			p0 = p1++;
 		}
@@ -2176,21 +2187,21 @@ static function nvgMoveTo(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(3);
 	vals[0] = NVG_MOVETO; vals[1] = x; vals[2] = y;
-	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+	nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgLineTo(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(3);
 	vals[0] = NVG_LINETO; vals[1] = x; vals[2] = y;
-	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+	nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgBezierTo(ctx: NVGcontext, c1x: Float, c1y: Float, c2x: Float, c2y: Float, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(7);
 	vals[0] = NVG_BEZIERTO; vals[1] = c1x; vals[2] = c1y; vals[3] = c2x; vals[4] = c2y; vals[5] = x; vals[6] = y;
-	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+	nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgQuadTo(ctx: NVGcontext, cx: Float, cy: Float, x: Float, y: Float): Void
@@ -2202,7 +2213,7 @@ static function nvgQuadTo(ctx: NVGcontext, cx: Float, cy: Float, x: Float, y: Fl
     vals[1] = x0 + 2.0/3.0*(cx - x0); vals[2] = y0 + 2.0/3.0*(cy - y0);
     vals[3] = x + 2.0/3.0*(cx - x); vals[4] = y + 2.0/3.0*(cy - y);
     vals[5] = x; vals[6] = y;
-    nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+    nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgArcTo(ctx: NVGcontext, x1: Float, y1: Float, x2: Float, y2: Float, radius: Float): Void
@@ -2265,14 +2276,14 @@ static function nvgClosePath(ctx: NVGcontext): Void
 {
 	var vals = new Vector<Float>(1);
 	vals[0] = NVG_CLOSE;
-	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+	nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgPathWinding(ctx: NVGcontext, dir: Int): Void
 {
 	var vals = new Vector<Float>(2);
 	vals[0] = NVG_WINDING; vals[1] = dir;
-	nvg__appendCommands(ctx, vals, NVG_COUNTOF(vals));
+	nvg__appendCommands(ctx, vals, vals.length);
 }
 
 static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Float, a1: Float, dir: Int)
@@ -3123,4 +3134,38 @@ static function nvgTextMetrics(ctx: NVGcontext, ascender: Ref<Float>, descender:
 		lineh.value *= invscale;
 }
 // vim: ft=c nu noet ts=4
+
+static final FONS_INVALID: Int = -1;
+static final FONS_ZERO_TOPLEFT: Int = 0;
+
+static function fonsSetSize(fs: FONScontext, size: Float): Void {}
+static function fonsSetSpacing(fs: FONScontext, size: Float): Void {}
+static function fonsSetBlur(fs: FONScontext, size: Float): Void {}
+static function fonsSetAlign(fs: FONScontext, size: Float): Void {}
+static function fonsSetFont(fs: FONScontext, font: Int) {}
+static function fonsVertMetrics(fs: FONScontext, ascender: Ref<Float>, descender: Ref<Float>, lineh: Ref<Float>): Void {}
+static function fonsLineBounds(fs: FONScontext, a: Float, b: Ref<Float>, c: Ref<Float>): Void {}
+static function fonsGetFontByName(fs: FONScontext, name: String): Int { return 0; }
+static function fonsResetAtlas(fs: FONScontext, w: Int, h: Int): Void {}
+static function fonsAddFont(fs: FONScontext, name: String, filename: String, value: Int): Int { return 0; }
+static function fonsAddFallbackFont(fs: FONScontext, baseFont: Int, fallbackFont: Int): Int { return 0; }
+static function fonsDeleteInternal(fs: FONScontext): Void {}
+}
+
+class FONScontext {}
+class FONSquad {}
+class FONStextIter {
+	public var nextx: Float;
+}
+class FONSparams {
+	public var width: Int;
+	public var height: Int;
+	public var flags: Int;
+	public var renderCreate: Dynamic;
+	public var renderUpdate: Dynamic;
+	public var renderDraw: Dynamic;
+	public var renderDelete: Dynamic;
+	public var userPtr: Dynamic;
+
+	public function new() {}
 }
