@@ -28,6 +28,66 @@ class Ref<T> {
 	}
 }
 
+class Pointer<T> {
+	var arr: Vector<T>;
+	var index: Int;
+
+	public function new(arr: Vector<T>, index: Int = 0) {
+		this.arr = arr;
+		this.index = index;
+	}
+
+	public inline function value(index: Int = 0): T {
+		return arr[this.index + index];
+	}
+
+	public inline function setValue(index: Int, value: T): Void {
+		arr[this.index + index] = value;
+	}
+
+	public inline function inc(): Void {
+		++index;
+	}
+
+	public inline function pointer(index: Int): Pointer<T> {
+		return new Pointer<T>(arr, this.index + index);
+	}
+
+	public inline function sub(pointer: Pointer<T>): Int {
+		return index - pointer.index;
+	}
+}
+
+class StringPointer {
+	var string: String;
+	var index: Int;
+
+	public function new(string: String, index: Int = 0) {
+		this.string = string;
+		this.index = index;
+	}
+
+	public inline function value(index: Int = 0): Int {
+		return string.charCodeAt(this.index + index);
+	}
+
+	public inline function inc(): Void {
+		++index;
+	}
+
+	public inline function pointer(index: Int): StringPointer {
+		return new StringPointer(string, this.index + index);
+	}
+
+	public inline function sub(pointer: StringPointer): Int {
+		return index - pointer.index;
+	}
+
+	public inline function length(): Int {
+		return string.length - index;
+	}
+}
+
 class NVGcolor {
 	public var r: Float;
 	public var g: Float;
@@ -36,6 +96,13 @@ class NVGcolor {
 
 	public function new() {
 		r = g = b = a = 0;
+	}
+
+	public function copyTo(color: NVGcolor): Void {
+		color.r = r;
+		color.g = g;
+		color.b = b;
+		color.a = a;
 	}
 }
 
@@ -67,6 +134,20 @@ class NVGpaint {
 		innerColor.r = innerColor.g = innerColor.b = innerColor.a = 0;
 		outerColor.r = outerColor.g = outerColor.b = outerColor.a = 0;
 		image = 0;
+	}
+
+	public function copyTo(paint: NVGpaint): Void {
+		for (i in 0...xform.length) {
+			paint.xform[i] = xform[i];
+		}
+		for (i in 0...extent.length) {
+			paint.extent[i] = extent[i];
+		}
+		paint.radius = radius;
+		paint.feather = feather;
+		innerColor.copyTo(paint.innerColor);
+		outerColor.copyTo(paint.outerColor);
+		paint.image = image;
 	}
 }
 
@@ -134,19 +215,31 @@ class NVGcompositeOperationState {
 	public var srcAlpha: Int;
 	public var dstAlpha: Int;
 
-	public function new() {}
+	public function new() {
+		srcRGB = 0;
+		dstRGB = 0;
+		srcAlpha = 0;
+		dstAlpha = 0;
+	}
+
+	public function copyTo(state: NVGcompositeOperationState): Void {
+		state.srcRGB = srcRGB;
+		state.dstRGB = dstRGB;
+		state.srcAlpha = srcAlpha;
+		state.dstAlpha = dstAlpha;
+	}
 }
 
 class NVGglyphPosition {
-	public var str: String;	// Position of the glyph in the input string.
+	public var str: StringPointer;	// Position of the glyph in the input string.
 	public var x: Float;			// The x-coordinate of the logical glyph position.
 	public var minx: Float; public var maxx: Float;	// The bounds of the glyph shape.
 }
 
 class NVGtextRow {
-	public var start: String;	// Pointer to the input text where the row starts.
-	public var end: String;	// Pointer to the input text where the row ends (one past the last character).
-	public var next: String;	// Pointer to the beginning of the next row.
+	public var start: StringPointer;	// Pointer to the input text where the row starts.
+	public var end: StringPointer;	// Pointer to the input text where the row ends (one past the last character).
+	public var next: StringPointer;	// Pointer to the beginning of the next row.
 	public var width: Float;		// Logical width of the row.
 	public var minx: Float; public var maxx: Float;	// Actual bounds of the row. Logical with and bounds can differ because of kerning and some parts over extending.
 }
@@ -173,6 +266,15 @@ class NVGscissor {
 		xform = new Vector<Float>(6);
 		extent = new Vector<Float>(2);
 	}
+
+	public function copyTo(scissor: NVGscissor): Void {
+		for (i in 0...xform.length) {
+			scissor.xform[i] = xform[i];
+		}
+		for (i in 0...extent.length) {
+			scissor.extent[i] = extent[i];
+		}
+	}
 }
 
 class NVGvertex {
@@ -184,12 +286,25 @@ class NVGpath {
 	public var count: Int;
 	public var closed: Int;
 	public var nbevel: Int;
-	public var fill: NVGvertex;
+	public var fill: Pointer<NVGvertex>;
 	public var nfill: Int;
-	public var stroke: Vector<NVGvertex>;
+	public var stroke: Pointer<NVGvertex>;
 	public var nstroke: Int;
 	public var winding: Int;
 	public var convex: Bool;
+
+	public function nullify(): Void {
+		first = 0;
+		count = 0;
+		closed = 0;
+		nbevel = 0;
+		fill = null;
+		nfill = 0;
+		stroke = null;
+		nstroke = 0;
+		winding = 0;
+		convex = false;
+	}
 }
 
 class NVGparams {
@@ -205,7 +320,7 @@ class NVGparams {
 	public function renderFlush(uptr: Dynamic): Void {}
 	public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {}
 	public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {}
-	public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: NVGvertex, nverts: Int, fringe: Float): Void {}
+	public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {}
 	public function renderDelete(uptr: Dynamic): Void {}
 }
 
@@ -246,6 +361,48 @@ class NVGstate {
 	public function new() {
 		xform = new Vector<Float>(6);
 	}
+
+	public function nullify(): Void {
+		compositeOperation = new NVGcompositeOperationState();
+		shapeAntiAlias = 0;
+		fill = null;
+		stroke = null;
+		strokeWidth = 0;
+		miterLimit = 0;
+		lineJoin = 0;
+		lineCap = 0;
+		alpha = 0;
+		xform = new Vector<Float>(6);
+		scissor = null;
+		fontSize = 0;
+		letterSpacing = 0;
+		lineHeight = 0;
+		fontBlur = 0;
+		textAlign = 0;
+		fontId = 0;
+	}
+
+	public function copyTo(state: NVGstate): Void {
+		compositeOperation.copyTo(state.compositeOperation);
+		state.shapeAntiAlias = shapeAntiAlias;
+		fill.copyTo(state.fill);
+		stroke.copyTo(state.stroke);
+		state.strokeWidth = strokeWidth;
+		state.miterLimit = miterLimit;
+		state.lineJoin = lineJoin;
+		state.lineCap = lineCap;
+		state.alpha = alpha;
+		for (i in 0...xform.length) {
+			state.xform[i] = xform[i];
+		}
+		scissor.copyTo(state.scissor);
+		state.fontSize = fontSize;
+		state.letterSpacing = letterSpacing;
+		state.lineHeight = lineHeight;
+		state.fontBlur = fontBlur;
+		state.textAlign = textAlign;
+		state.fontId = fontId;
+	}
 }
 
 class NVGpoint {
@@ -268,13 +425,13 @@ class NVGpoint {
 }
 
 class NVGpathCache {
-	public var points: Vector<Vector<NVGpoint>>;
+	public var points: Pointer<NVGpoint>;
 	public var npoints: Int;
 	public var cpoints: Int;
 	public var paths: Vector<NVGpath>;
 	public var npaths: Int;
 	public var cpaths: Int;
-	public var verts: Vector<NVGvertex>;
+	public var verts: Pointer<NVGvertex>;
 	public var nverts: Int;
 	public var cverts: Int;
 	public var bounds: Vector<Float>;
@@ -286,7 +443,7 @@ class NVGpathCache {
 
 class NVGcontext {
 	public var params: NVGparams;
-	public var commands: Array<Float>;
+	public var commands: Pointer<Float>;
 	public var ccommands: Int;
 	public var ncommands: Int;
 	public var commandx: Float; public var commandy: Float;
@@ -378,7 +535,7 @@ static function nvg__allocPathCache(): NVGpathCache
 	if (c == null) return null;
 	// memset(c, 0, sizeof(NVGpathCache));
 
-	c.points = new Vector<NVGpoint>(NVG_INIT_POINTS_SIZE);
+	c.points = new Pointer<NVGpoint>(new Vector<NVGpoint>(NVG_INIT_POINTS_SIZE));
 	if (c.points == null) return null;
 	c.npoints = 0;
 	c.cpoints = NVG_INIT_POINTS_SIZE;
@@ -388,7 +545,7 @@ static function nvg__allocPathCache(): NVGpathCache
 	c.npaths = 0;
 	c.cpaths = NVG_INIT_PATHS_SIZE;
 
-	c.verts = new Vector<NVGvertex>(NVG_INIT_VERTS_SIZE);
+	c.verts = new Pointer<NVGvertex>(new Vector<NVGvertex>(NVG_INIT_VERTS_SIZE));
 	if (c.verts == null) return null;
 	c.nverts = 0;
 	c.cverts = NVG_INIT_VERTS_SIZE;
@@ -494,7 +651,7 @@ static function nvgCreateInternal(params: NVGparams): NVGcontext
 	for (i in 0...NVG_MAX_FONTIMAGES)
 		ctx.fontImages[i] = 0;
 
-	ctx.commands = new Vector<Float>(NVG_INIT_COMMANDS_SIZE);
+	ctx.commands = new Pointer<Float>(new Vector<Float>(NVG_INIT_COMMANDS_SIZE));
 	if (ctx.commands == null) return null;
 	ctx.ncommands = 0;
 	ctx.ccommands = NVG_INIT_COMMANDS_SIZE;
@@ -589,7 +746,7 @@ static function nvgEndFrame(ctx: NVGcontext): Void
 	ctx.params.renderFlush(ctx.params.userPtr);
 	if (ctx.fontImageIdx != 0) {
 		var fontImage: Int = ctx.fontImages[ctx.fontImageIdx];
-		var j: Int; var iw: Int; var ih: Int;
+		var j: Int; var iw: Int = 0; var ih: Int = 0;
 		// delete images that smaller than current one
 		if (fontImage == 0)
 			return;
@@ -597,7 +754,7 @@ static function nvgEndFrame(ctx: NVGcontext): Void
 		j = 0;
 		for (i in 0...ctx.fontImageIdx) {
 			if (ctx.fontImages[i] != 0) {
-				var nw: Int; var nh: Int;
+				var nw: Int = 0; var nh: Int = 0;
 				nvgImageSize(ctx, ctx.fontImages[i], new Ref<Int>(nw), new Ref<Int>(nh));
 				if (nw < iw || nh < ih)
 					nvgDeleteImage(ctx, ctx.fontImages[i]);
@@ -627,7 +784,7 @@ static function nvgRGBf(r: Float, g: Float, b: Float): NVGcolor
 
 static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
 {
-	var color: NVGcolor;
+	var color: NVGcolor = new NVGcolor();
 	// Use longer initialization to suppress warning.
 	color.r = r / 255.0;
 	color.g = g / 255.0;
@@ -638,7 +795,7 @@ static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
 
 static function nvgRGBAf(r: Float, g: Float, b: Float, a: Float): NVGcolor
 {
-	var color: NVGcolor;
+	var color: NVGcolor = new NVGcolor();
 	// Use longer initialization to suppress warning.
 	color.r = r;
 	color.g = g;
@@ -699,7 +856,7 @@ static function nvg__hue(h: Float, m1: Float, m2: Float): Float
 static function nvgHSLA(h: Float, s: Float, l: Float, a: Int): NVGcolor
 {
 	var m1: Float; var m2: Float;
-	var col: NVGcolor;
+	var col: NVGcolor = new NVGcolor();
 	h = nvg__modf(h, 1.0);
 	if (h < 0.0) h += 1.0;
 	s = nvg__clampf(s, 0.0, 1.0);
@@ -997,11 +1154,11 @@ static function nvgFillPaint(ctx: NVGcontext, paint: NVGpaint): Void
 
 static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: Int): Int
 {
-	var w: Int; var h: Int; var n: Int; var image: Int;
-	var img: Array<Int>;
+	var w: Int = 0; var h: Int = 0; var n: Int; var image: Int;
+	var img: Array<Int> = null;
 	// stbi_set_unpremultiply_on_load(1);
 	// stbi_convert_iphone_png_to_rgb(1);
-	img = stbi_load(filename, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
+	//**img = stbi_load(filename, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
 	if (img == null) {
 //		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
 		return 0;
@@ -1013,8 +1170,8 @@ static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: In
 
 static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<Int>, ndata: Int): Int
 {
-	var w: Int; var h: Int; var n: Int; var image: Int;
-	var img: Array<Int> = stbi_load_from_memory(data, ndata, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
+	var w: Int = 0; var h: Int = 0; var n: Int; var image: Int;
+	var img: Array<Int> = null; //**stbi_load_from_memory(data, ndata, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
 	if (img == null) {
 //		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
 		return 0;
@@ -1031,7 +1188,7 @@ static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: 
 
 static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void
 {
-	var w: Int; var h: Int;
+	var w: Int = 0; var h: Int = 0;
 	ctx.params.renderGetTextureSize(ctx.params.userPtr, image, new Ref<Int>(w), new Ref<Int>(h));
 	ctx.params.renderUpdateTexture(ctx.params.userPtr, image, 0,0, w,h, data);
 }
@@ -1050,7 +1207,7 @@ static function nvgLinearGradient(ctx: NVGcontext,
 								  sx: Float, sy: Float, ex: Float, ey: Float,
 								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	var p: NVGpaint;
+	var p: NVGpaint = new NVGpaint();
 	var dx: Float; var dy: Float; var d: Float;
 	final large: Float = 1e5;
 	// NVG_NOTUSED(ctx);
@@ -1089,7 +1246,7 @@ static function nvgRadialGradient(ctx: NVGcontext,
 								  cx: Float, cy: Float, inr: Float, outr: Float,
 								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	var p: NVGpaint;
+	var p: NVGpaint = new NVGpaint();
 	var r: Float = (inr+outr)*0.5;
 	var f: Float = (outr-inr);
 	// NVG_NOTUSED(ctx);
@@ -1116,7 +1273,7 @@ static function nvgBoxGradient(ctx: NVGcontext,
 							   x: Float, y: Float, w: Float, h: Float, r: Float, f: Float,
 							   icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
-	var p: NVGpaint;
+	var p: NVGpaint = new NVGpaint();
 	// NVG_NOTUSED(ctx);
 	p.nullify();
 
@@ -1142,7 +1299,7 @@ static function nvgImagePattern(ctx: NVGcontext,
 								cx: Float, cy: Float, w: Float, h: Float, angle: Float,
 								image: Int, alpha: Float): NVGpaint
 {
-	var p: NVGpaint;
+	var p: NVGpaint = new NVGpaint();
 	// NVG_NOTUSED(ctx);
 	p.nullify();
 
@@ -1246,7 +1403,7 @@ static function nvgGlobalCompositeBlendFunc(ctx: NVGcontext, sfactor: Int, dfact
 
 static function nvgGlobalCompositeBlendFuncSeparate(ctx: NVGcontext, srcRGB: Int, dstRGB: Int, srcAlpha: Int, dstAlpha: Int): Void
 {
-	var op: NVGcompositeOperationState;
+	var op: NVGcompositeOperationState = new NVGcompositeOperationState();
 	op.srcRGB = srcRGB;
 	op.dstRGB = dstRGB;
 	op.srcAlpha = srcAlpha;
@@ -1290,7 +1447,7 @@ static function nvg__appendCommands(ctx: NVGcontext, vals: Vector<Float>, nvals:
 		var ccommands: Int = ctx.ncommands+nvals + Std.int(ctx.ccommands/2);
 		commands = new Vector<Float>(ccommands);
 		if (commands == null) return;
-		ctx.commands = commands;
+		ctx.commands = new Pointer<Float>(commands);
 		ctx.ccommands = ccommands;
 	}
 
@@ -1331,7 +1488,7 @@ static function nvg__appendCommands(ctx: NVGcontext, vals: Vector<Float>, nvals:
 
 	for (i in 0...nvals)
 	{
-		ctx.commands[ctx.ncommands + i] = vals[i];
+		ctx.commands.setValue(ctx.ncommands + i, vals[i]);
 	}
 
 	ctx.ncommands += nvals;
@@ -1373,7 +1530,7 @@ static function nvg__addPath(ctx: NVGcontext): Void
 static function nvg__lastPoint(ctx: NVGcontext): NVGpoint
 {
 	if (ctx.cache.npoints > 0)
-		return ctx.cache.points[ctx.cache.npoints-1];
+		return ctx.cache.points.value(ctx.cache.npoints-1);
 	return null;
 }
 
@@ -1396,11 +1553,11 @@ static function nvg__addPoint(ctx: NVGcontext, x: Float, y: Float, flags: Int): 
 		var cpoints: Int = ctx.cache.npoints+1 + Std.int(ctx.cache.cpoints/2);
 		points = new Vector<NVGpoint>(cpoints);
 		if (points == null) return;
-		ctx.cache.points = points;
+		ctx.cache.points = new Pointer<NVGpoint>(points);
 		ctx.cache.cpoints = cpoints;
 	}
 
-	pt = ctx.cache.points[ctx.cache.npoints];
+	pt = ctx.cache.points.value(ctx.cache.npoints);
 	pt.nullify();
 	pt.x = x;
 	pt.y = y;
@@ -1431,14 +1588,14 @@ static function nvg__getAverageScale(t: Vector<Float>): Float
 	return (sx + sy) * 0.5;
 }
 
-static function nvg__allocTempVerts(ctx: NVGcontext, nverts: Int): Vector<NVGvertex>
+static function nvg__allocTempVerts(ctx: NVGcontext, nverts: Int): Pointer<NVGvertex>
 {
 	if (nverts > ctx.cache.cverts) {
 		var verts: Vector<NVGvertex>;
 		var cverts: Int = (nverts + 0xff) & ~0xff; // Round up to prevent allocations when things change just slightly.
 		verts = new Vector<NVGvertex>(cverts);
 		if (verts == null) return null;
-		ctx.cache.verts = verts;
+		ctx.cache.verts = new Pointer<NVGvertex>(verts);
 		ctx.cache.cverts = cverts;
 	}
 
@@ -1454,27 +1611,27 @@ static function nvg__triarea2(ax: Float, ay: Float, bx: Float, by: Float, cx: Fl
 	return acx*aby - abx*acy;
 }
 
-static function nvg__polyArea(pts: Vector<NVGpoint>, npts: Int): Float
+static function nvg__polyArea(pts: Pointer<NVGpoint>, npts: Int): Float
 {
 	// int i;
 	var area: Float = 0;
 	for (i in 2...npts) {
-		var a: NVGpoint = pts[0];
-		var b: NVGpoint = pts[i-1];
-		var c: NVGpoint = pts[i];
+		var a: NVGpoint = pts.value(0);
+		var b: NVGpoint = pts.value(i-1);
+		var c: NVGpoint = pts.value(i);
 		area += nvg__triarea2(a.x,a.y, b.x,b.y, c.x,c.y);
 	}
 	return area * 0.5;
 }
 
-static function nvg__polyReverse(pts: Vector<NVGpoint>, npts: Int): Void
+static function nvg__polyReverse(pts: Pointer<NVGpoint>, npts: Int): Void
 {
 	var tmp: NVGpoint;
 	var i: Int = 0; var j: Int = npts-1;
 	while (i < j) {
-		tmp = pts[i];
-		pts[i] = pts[j];
-		pts[j] = tmp;
+		tmp = pts.value(i);
+		pts.setValue(i, pts.value(j));
+		pts.setValue(j, tmp);
 		i++;
 		j--;
 	}
@@ -1537,14 +1694,14 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 	var cache: NVGpathCache = ctx.cache;
 //	NVGstate* state = nvg__getState(ctx);
 	var last: NVGpoint;
-	var p0: NVGpoint;
-	var p1: NVGpoint;
-	var pts: Vector<NVGpoint>;
+	var p0: Pointer<NVGpoint>;
+	var p1: Pointer<NVGpoint>;
+	var pts: Pointer<NVGpoint>;
 	var path: NVGpath;
 	var i: Int; var j: Int;
-	var cp1: Array<Float>;
-	var cp2: Array<Float>;
-	var p: Array<Float>;
+	var cp1: Pointer<Float>;
+	var cp2: Pointer<Float>;
+	var p: Pointer<Float>;
 	var area: Float;
 
 	if (cache.npaths > 0)
@@ -1553,26 +1710,26 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 	// Flatten
 	i = 0;
 	while (i < ctx.ncommands) {
-		var cmd: Int = Std.int(ctx.commands[i]);
+		var cmd: Int = Std.int(ctx.commands.value(i));
 		switch (cmd) {
 		case NVG_MOVETO:
 			nvg__addPath(ctx);
-			p = ctx.commands[i+1];
-			nvg__addPoint(ctx, p[0], p[1], NVG_PT_CORNER);
+			p = ctx.commands.pointer(i+1);
+			nvg__addPoint(ctx, p.value(0), p.value(1), NVG_PT_CORNER);
 			i += 3;
 			break;
 		case NVG_LINETO:
-			p = ctx.commands[i+1];
-			nvg__addPoint(ctx, p[0], p[1], NVG_PT_CORNER);
+			p = ctx.commands.pointer(i+1);
+			nvg__addPoint(ctx, p.value(0), p.value(1), NVG_PT_CORNER);
 			i += 3;
 			break;
 		case NVG_BEZIERTO:
 			last = nvg__lastPoint(ctx);
 			if (last != null) {
-				cp1 = ctx.commands[i+1];
-				cp2 = ctx.commands[i+3];
-				p = ctx.commands[i+5];
-				nvg__tesselateBezier(ctx, last.x,last.y, cp1[0],cp1[1], cp2[0],cp2[1], p[0],p[1], 0, NVG_PT_CORNER);
+				cp1 = ctx.commands.pointer(i+1);
+				cp2 = ctx.commands.pointer(i+3);
+				p = ctx.commands.pointer(i+5);
+				nvg__tesselateBezier(ctx, last.x,last.y, cp1.value(0),cp1.value(1), cp2.value(0),cp2.value(1), p.value(0),p.value(1), 0, NVG_PT_CORNER);
 			}
 			i += 7;
 			break;
@@ -1581,7 +1738,7 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 			i++;
 			break;
 		case NVG_WINDING:
-			nvg__pathWinding(ctx, Std.int(ctx.commands[i+1]));
+			nvg__pathWinding(ctx, Std.int(ctx.commands.value(i+1)));
 			i += 2;
 			break;
 		default:
@@ -1595,14 +1752,14 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 	// Calculate the direction and length of line segments.
 	for (j in 0...cache.npaths) {
 		path = cache.paths[j];
-		pts = cache.points[path.first];
+		pts = cache.points.pointer(path.first);
 
 		// If the first and last points are the same, remove the last, mark as closed path.
-		p0 = pts[path.count-1];
-		p1 = pts[0];
-		if (nvg__ptEquals(p0.x,p0.y, p1.x,p1.y, ctx.distTol)) {
+		p0 = pts.pointer(path.count-1);
+		p1 = pts.pointer(0);
+		if (nvg__ptEquals(p0.value().x,p0.value().y, p1.value().x,p1.value().y, ctx.distTol)) {
 			path.count--;
-			p0 = pts[path.count-1];
+			p0 = pts.pointer(path.count-1);
 			path.closed = 1;
 		}
 
@@ -1617,16 +1774,17 @@ static function nvg__flattenPaths(ctx: NVGcontext): Void
 
 		for(i in 0...path.count) {
 			// Calculate segment direction and length
-			p0.dx = p1.x - p0.x;
-			p0.dy = p1.y - p0.y;
-			p0.len = nvg__normalize(new Ref<Float>(p0.dx), new Ref<Float>(p0.dy));
+			p0.value().dx = p1.value().x - p0.value().x;
+			p0.value().dy = p1.value().y - p0.value().y;
+			p0.value().len = nvg__normalize(new Ref<Float>(p0.value().dx), new Ref<Float>(p0.value().dy));
 			// Update bounds
-			cache.bounds[0] = nvg__minf(cache.bounds[0], p0.x);
-			cache.bounds[1] = nvg__minf(cache.bounds[1], p0.y);
-			cache.bounds[2] = nvg__maxf(cache.bounds[2], p0.x);
-			cache.bounds[3] = nvg__maxf(cache.bounds[3], p0.y);
+			cache.bounds[0] = nvg__minf(cache.bounds[0], p0.value().x);
+			cache.bounds[1] = nvg__minf(cache.bounds[1], p0.value().y);
+			cache.bounds[2] = nvg__maxf(cache.bounds[2], p0.value().x);
+			cache.bounds[3] = nvg__maxf(cache.bounds[3], p0.value().y);
 			// Advance
-			p0 = p1++;
+			p0 = p1.pointer(0);
+			p1.inc();
 		}
 	}
 }
@@ -1653,10 +1811,11 @@ static function nvg__chooseBevel(bevel: Int, p0: NVGpoint, p1: NVGpoint, w: Floa
 	}
 }
 
-static function nvg__roundJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
+static function nvg__roundJoin(dst_: Pointer<NVGvertex>, p0: NVGpoint, p1: NVGpoint,
 								 lw: Float, rw: Float, lu: Float, ru: Float, ncap: Int,
-								 fringe: Float): NVGvertex
+								 fringe: Float): Pointer<NVGvertex>
 {
+	var dst = dst_.pointer(0);
 	var i: Int; var n: Int;
 	var dlx0: Float = p0.dy;
 	var dly0: Float = -p0.dx;
@@ -1665,14 +1824,14 @@ static function nvg__roundJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
 	// NVG_NOTUSED(fringe);
 
 	if ((p1.flags & NVG_PT_LEFT) != 0) {
-		var lx0: Float; var ly0: Float; var lx1: Float; var ly1: Float; var a0: Float; var a1: Float;
+		var lx0: Float = 0; var ly0: Float = 0; var lx1: Float = 0; var ly1: Float = 0; var a0: Float; var a1: Float;
 		nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, new Ref<Float>(lx0),new Ref<Float>(ly0), new Ref<Float>(lx1),new Ref<Float>(ly1));
 		a0 = nvg__atan2f(-dly0, -dlx0);
 		a1 = nvg__atan2f(-dly1, -dlx1);
 		if (a1 > a0) a1 -= NVG_PI*2;
 
-		nvg__vset(dst, lx0, ly0, lu,1); dst++;
-		nvg__vset(dst, p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst++;
+		nvg__vset(dst.value(), lx0, ly0, lu,1); dst.inc();
+		nvg__vset(dst.value(), p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst.inc();
 
 		n = nvg__clampi(Std.int(nvg__ceilf(((a0 - a1) / NVG_PI) * ncap)), 2, ncap);
 		for (i in 0...n) {
@@ -1680,22 +1839,22 @@ static function nvg__roundJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
 			var a: Float = a0 + u*(a1-a0);
 			var rx: Float = p1.x + nvg__cosf(a) * rw;
 			var ry: Float = p1.y + nvg__sinf(a) * rw;
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
-			nvg__vset(dst, rx, ry, ru,1); dst++;
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
+			nvg__vset(dst.value(), rx, ry, ru,1); dst.inc();
 		}
 
-		nvg__vset(dst, lx1, ly1, lu,1); dst++;
-		nvg__vset(dst, p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst++;
+		nvg__vset(dst.value(), lx1, ly1, lu,1); dst.inc();
+		nvg__vset(dst.value(), p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst.inc();
 
 	} else {
-		var rx0: Float; var ry0: Float; var rx1: Float; var ry1: Float; var a0: Float; var a1: Float;
+		var rx0: Float = 0; var ry0: Float = 0; var rx1: Float = 0; var ry1: Float = 0; var a0: Float; var a1: Float;
 		nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, new Ref<Float>(rx0),new Ref<Float>(ry0), new Ref<Float>(rx1),new Ref<Float>(ry1));
 		a0 = nvg__atan2f(dly0, dlx0);
 		a1 = nvg__atan2f(dly1, dlx1);
 		if (a1 < a0) a1 += NVG_PI*2;
 
-		nvg__vset(dst, p1.x + dlx0*rw, p1.y + dly0*rw, lu,1); dst++;
-		nvg__vset(dst, rx0, ry0, ru,1); dst++;
+		nvg__vset(dst.value(), p1.x + dlx0*rw, p1.y + dly0*rw, lu,1); dst.inc();
+		nvg__vset(dst.value(), rx0, ry0, ru,1); dst.inc();
 
 		n = nvg__clampi(Std.int(nvg__ceilf(((a1 - a0) / NVG_PI) * ncap)), 2, ncap);
 		for (i in 0...n) {
@@ -1703,22 +1862,22 @@ static function nvg__roundJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
 			var a: Float = a0 + u*(a1-a0);
 			var lx: Float = p1.x + nvg__cosf(a) * lw;
 			var ly: Float = p1.y + nvg__sinf(a) * lw;
-			nvg__vset(dst, lx, ly, lu,1); dst++;
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
+			nvg__vset(dst.value(), lx, ly, lu,1); dst.inc();
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
 		}
 
-		nvg__vset(dst, p1.x + dlx1*rw, p1.y + dly1*rw, lu,1); dst++;
-		nvg__vset(dst, rx1, ry1, ru,1); dst++;
+		nvg__vset(dst.value(), p1.x + dlx1*rw, p1.y + dly1*rw, lu,1); dst.inc();
+		nvg__vset(dst.value(), rx1, ry1, ru,1); dst.inc();
 
 	}
 	return dst;
 }
 
-static function nvg__bevelJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
-										lw: Float, rw: Float, lu: Float, ru: Float, fringe: Float): NVGvertex
+static function nvg__bevelJoin(dst: Pointer<NVGvertex>, p0: NVGpoint, p1: NVGpoint,
+										lw: Float, rw: Float, lu: Float, ru: Float, fringe: Float): Pointer<NVGvertex>
 {
-	var rx0: Float; var ry0: Float; var rx1 : Float; var ry1: Float;
-	var lx0: Float; var ly0: Float; var lx1: Float; var ly1: Float;
+	var rx0: Float = 0; var ry0: Float = 0; var rx1: Float = 0; var ry1: Float = 0;
+	var lx0: Float = 0; var ly0: Float = 0; var lx1: Float = 0; var ly1: Float = 0;
 	var dlx0: Float = p0.dy;
 	var dly0: Float = -p0.dx;
 	var dlx1: Float = p1.dy;
@@ -1728,134 +1887,138 @@ static function nvg__bevelJoin(dst: NVGvertex, p0: NVGpoint, p1: NVGpoint,
 	if ((p1.flags & NVG_PT_LEFT) != 0) {
 		nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, new Ref<Float>(lx0),new Ref<Float>(ly0), new Ref<Float>(lx1),new Ref<Float>(ly1));
 
-		nvg__vset(dst, lx0, ly0, lu,1); dst++;
-		nvg__vset(dst, p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst++;
+		nvg__vset(dst.value(), lx0, ly0, lu,1); dst.inc();
+		nvg__vset(dst.value(), p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst.inc();
 
 		if ((p1.flags & NVG_PT_BEVEL) != 0) {
-			nvg__vset(dst, lx0, ly0, lu,1); dst++;
-			nvg__vset(dst, p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst++;
+			nvg__vset(dst.value(), lx0, ly0, lu,1); dst.inc();
+			nvg__vset(dst.value(), p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst.inc();
 
-			nvg__vset(dst, lx1, ly1, lu,1); dst++;
-			nvg__vset(dst, p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst++;
+			nvg__vset(dst.value(), lx1, ly1, lu,1); dst.inc();
+			nvg__vset(dst.value(), p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst.inc();
 		} else {
 			rx0 = p1.x - p1.dmx * rw;
 			ry0 = p1.y - p1.dmy * rw;
 
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
-			nvg__vset(dst, p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst++;
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
+			nvg__vset(dst.value(), p1.x - dlx0*rw, p1.y - dly0*rw, ru,1); dst.inc();
 
-			nvg__vset(dst, rx0, ry0, ru,1); dst++;
-			nvg__vset(dst, rx0, ry0, ru,1); dst++;
+			nvg__vset(dst.value(), rx0, ry0, ru,1); dst.inc();
+			nvg__vset(dst.value(), rx0, ry0, ru,1); dst.inc();
 
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
-			nvg__vset(dst, p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst++;
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
+			nvg__vset(dst.value(), p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst.inc();
 		}
 
-		nvg__vset(dst, lx1, ly1, lu,1); dst++;
-		nvg__vset(dst, p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst++;
+		nvg__vset(dst.value(), lx1, ly1, lu,1); dst.inc();
+		nvg__vset(dst.value(), p1.x - dlx1*rw, p1.y - dly1*rw, ru,1); dst.inc();
 
 	} else {
 		nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, new Ref<Float>(rx0),new Ref<Float>(ry0), new Ref<Float>(rx1),new Ref<Float>(ry1));
 
-		nvg__vset(dst, p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst++;
-		nvg__vset(dst, rx0, ry0, ru,1); dst++;
+		nvg__vset(dst.value(), p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst.inc();
+		nvg__vset(dst.value(), rx0, ry0, ru,1); dst.inc();
 
 		if ((p1.flags & NVG_PT_BEVEL) != 0) {
-			nvg__vset(dst, p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst++;
-			nvg__vset(dst, rx0, ry0, ru,1); dst++;
+			nvg__vset(dst.value(), p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst.inc();
+			nvg__vset(dst.value(), rx0, ry0, ru,1); dst.inc();
 
-			nvg__vset(dst, p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst++;
-			nvg__vset(dst, rx1, ry1, ru,1); dst++;
+			nvg__vset(dst.value(), p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst.inc();
+			nvg__vset(dst.value(), rx1, ry1, ru,1); dst.inc();
 		} else {
 			lx0 = p1.x + p1.dmx * lw;
 			ly0 = p1.y + p1.dmy * lw;
 
-			nvg__vset(dst, p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst++;
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
+			nvg__vset(dst.value(), p1.x + dlx0*lw, p1.y + dly0*lw, lu,1); dst.inc();
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
 
-			nvg__vset(dst, lx0, ly0, lu,1); dst++;
-			nvg__vset(dst, lx0, ly0, lu,1); dst++;
+			nvg__vset(dst.value(), lx0, ly0, lu,1); dst.inc();
+			nvg__vset(dst.value(), lx0, ly0, lu,1); dst.inc();
 
-			nvg__vset(dst, p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst++;
-			nvg__vset(dst, p1.x, p1.y, 0.5,1); dst++;
+			nvg__vset(dst.value(), p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst.inc();
+			nvg__vset(dst.value(), p1.x, p1.y, 0.5,1); dst.inc();
 		}
 
-		nvg__vset(dst, p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst++;
-		nvg__vset(dst, rx1, ry1, ru,1); dst++;
+		nvg__vset(dst.value(), p1.x + dlx1*lw, p1.y + dly1*lw, lu,1); dst.inc();
+		nvg__vset(dst.value(), rx1, ry1, ru,1); dst.inc();
 	}
 
 	return dst;
 }
 
-static function nvg__buttCapStart(dst: Vector<NVGvertex>, p: NVGpoint,
+static function nvg__buttCapStart(dst_: Pointer<NVGvertex>, p: NVGpoint,
 									dx: Float, dy: Float, w: Float, d: Float,
-									aa: Float, u0: Float, u1: Float): Vector<NVGvertex>
+									aa: Float, u0: Float, u1: Float): Pointer<NVGvertex>
 {
+	var dst = dst_.pointer(0);
 	var px: Float = p.x - dx*d;
 	var py: Float = p.y - dy*d;
 	var dlx: Float = dy;
 	var dly: Float = -dx;
-	nvg__vset(dst, px + dlx*w - dx*aa, py + dly*w - dy*aa, u0,0); dst++;
-	nvg__vset(dst, px - dlx*w - dx*aa, py - dly*w - dy*aa, u1,0); dst++;
-	nvg__vset(dst, px + dlx*w, py + dly*w, u0,1); dst++;
-	nvg__vset(dst, px - dlx*w, py - dly*w, u1,1); dst++;
+	nvg__vset(dst.value(), px + dlx*w - dx*aa, py + dly*w - dy*aa, u0,0); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w - dx*aa, py - dly*w - dy*aa, u1,0); dst.inc();
+	nvg__vset(dst.value(), px + dlx*w, py + dly*w, u0,1); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w, py - dly*w, u1,1); dst.inc();
 	return dst;
 }
 
-static function nvg__buttCapEnd(dst: Vector<NVGvertex>, p: NVGpoint,
+static function nvg__buttCapEnd(dst_: Pointer<NVGvertex>, p: NVGpoint,
 								  dx: Float, dy: Float, w: Float, d: Float,
-								  aa: Float, u0: Float, u1: Float): Vector<NVGvertex>
+								  aa: Float, u0: Float, u1: Float): Pointer<NVGvertex>
 {
+	var dst = dst_.pointer(0);
 	var px: Float = p.x + dx*d;
 	var py: Float = p.y + dy*d;
 	var dlx: Float = dy;
 	var dly: Float = -dx;
-	nvg__vset(dst, px + dlx*w, py + dly*w, u0,1); dst++;
-	nvg__vset(dst, px - dlx*w, py - dly*w, u1,1); dst++;
-	nvg__vset(dst, px + dlx*w + dx*aa, py + dly*w + dy*aa, u0,0); dst++;
-	nvg__vset(dst, px - dlx*w + dx*aa, py - dly*w + dy*aa, u1,0); dst++;
+	nvg__vset(dst.value(), px + dlx*w, py + dly*w, u0,1); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w, py - dly*w, u1,1); dst.inc();
+	nvg__vset(dst.value(), px + dlx*w + dx*aa, py + dly*w + dy*aa, u0,0); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w + dx*aa, py - dly*w + dy*aa, u1,0); dst.inc();
 	return dst;
 }
 
 
-static function nvg__roundCapStart(dst: Vector<NVGvertex>, p: NVGpoint,
+static function nvg__roundCapStart(dst_: Pointer<NVGvertex>, p: NVGpoint,
 									 dx: Float, dy: Float, w: Float, ncap: Int,
-									 aa: Float, u0: Float, u1: Float): Vector<NVGvertex>
+									 aa: Float, u0: Float, u1: Float): Pointer<NVGvertex>
 {
-	//int i;
-	var px: Float = p.x;
-	var py: Float = p.y;
-	var dlx: Float = dy;
-	var dly: Float = -dx;
-	// NVG_NOTUSED(aa);
-	for (i in 0...ncap) {
-		var a: Float = i/(ncap-1)*NVG_PI;
-		var ax: Float = nvg__cosf(a) * w, ay = nvg__sinf(a) * w;
-		nvg__vset(dst, px - dlx*ax - dx*ay, py - dly*ax - dy*ay, u0,1); dst++;
-		nvg__vset(dst, px, py, 0.5,1); dst++;
-	}
-	nvg__vset(dst, px + dlx*w, py + dly*w, u0,1); dst++;
-	nvg__vset(dst, px - dlx*w, py - dly*w, u1,1); dst++;
-	return dst;
-}
-
-static function nvg__roundCapEnd(dst: Vector<NVGvertex>, p: NVGpoint,
-								   dx: Float, dy: Float, w: Float, ncap: Int,
-								   aa: Float, u0: Float, u1: Float): Vector<NVGvertex>
-{
+	var dst = dst_.pointer(0);
 	// int i;
 	var px: Float = p.x;
 	var py: Float = p.y;
 	var dlx: Float = dy;
 	var dly: Float = -dx;
 	// NVG_NOTUSED(aa);
-	nvg__vset(dst, px + dlx*w, py + dly*w, u0,1); dst++;
-	nvg__vset(dst, px - dlx*w, py - dly*w, u1,1); dst++;
 	for (i in 0...ncap) {
 		var a: Float = i/(ncap-1)*NVG_PI;
 		var ax: Float = nvg__cosf(a) * w, ay = nvg__sinf(a) * w;
-		nvg__vset(dst, px, py, 0.5,1); dst++;
-		nvg__vset(dst, px - dlx*ax + dx*ay, py - dly*ax + dy*ay, u0,1); dst++;
+		nvg__vset(dst.value(), px - dlx*ax - dx*ay, py - dly*ax - dy*ay, u0,1); dst.inc();
+		nvg__vset(dst.value(), px, py, 0.5,1); dst.inc();
+	}
+	nvg__vset(dst.value(), px + dlx*w, py + dly*w, u0,1); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w, py - dly*w, u1,1); dst.inc();
+	return dst;
+}
+
+static function nvg__roundCapEnd(dst_: Pointer<NVGvertex>, p: NVGpoint,
+								   dx: Float, dy: Float, w: Float, ncap: Int,
+								   aa: Float, u0: Float, u1: Float): Pointer<NVGvertex>
+{
+	var dst = dst_.pointer(0);
+	// int i;
+	var px: Float = p.x;
+	var py: Float = p.y;
+	var dlx: Float = dy;
+	var dly: Float = -dx;
+	// NVG_NOTUSED(aa);
+	nvg__vset(dst.value(), px + dlx*w, py + dly*w, u0,1); dst.inc();
+	nvg__vset(dst.value(), px - dlx*w, py - dly*w, u1,1); dst.inc();
+	for (i in 0...ncap) {
+		var a: Float = i/(ncap-1)*NVG_PI;
+		var ax: Float = nvg__cosf(a) * w, ay = nvg__sinf(a) * w;
+		nvg__vset(dst.value(), px, py, 0.5,1); dst.inc();
+		nvg__vset(dst.value(), px - dlx*ax + dx*ay, py - dly*ax + dy*ay, u0,1); dst.inc();
 	}
 	return dst;
 }
@@ -1872,58 +2035,58 @@ static function nvg__calculateJoins(ctx: NVGcontext, w: Float, lineJoin: Int, mi
 	// Calculate which joins needs extra vertices to append, and gather vertex count.
 	for (i in 0...cache.npaths) {
 		var path: NVGpath = cache.paths[i];
-		var pts: Vector<NVGpoint> = cache.points[path.first];
-		var p0: NVGpoint = pts[path.count-1];
-		var p1: NVGpoint = pts[0];
+		var pts: Pointer<NVGpoint> = cache.points.pointer(path.first);
+		var p0: Pointer<NVGpoint> = pts.pointer(path.count-1);
+		var p1: Pointer<NVGpoint> = pts.pointer(0);
 		var nleft: Int = 0;
 
 		path.nbevel = 0;
 
 		for (j in 0...path.count) {
 			var dlx0: Float; var dly0: Float; var dlx1: Float; var dly1: Float; var dmr2: Float; var cross: Float; var limit: Float;
-			dlx0 = p0.dy;
-			dly0 = -p0.dx;
-			dlx1 = p1.dy;
-			dly1 = -p1.dx;
+			dlx0 = p0.value().dy;
+			dly0 = -p0.value().dx;
+			dlx1 = p1.value().dy;
+			dly1 = -p1.value().dx;
 			// Calculate extrusions
-			p1.dmx = (dlx0 + dlx1) * 0.5;
-			p1.dmy = (dly0 + dly1) * 0.5;
-			dmr2 = p1.dmx*p1.dmx + p1.dmy*p1.dmy;
+			p1.value().dmx = (dlx0 + dlx1) * 0.5;
+			p1.value().dmy = (dly0 + dly1) * 0.5;
+			dmr2 = p1.value().dmx*p1.value().dmx + p1.value().dmy*p1.value().dmy;
 			if (dmr2 > 0.000001) {
 				var scale: Float = 1.0 / dmr2;
 				if (scale > 600.0) {
 					scale = 600.0;
 				}
-				p1.dmx *= scale;
-				p1.dmy *= scale;
+				p1.value().dmx *= scale;
+				p1.value().dmy *= scale;
 			}
 
 			// Clear flags, but keep the corner.
-			p1.flags = ((p1.flags & NVG_PT_CORNER) != 0) ? NVG_PT_CORNER : 0;
+			p1.value().flags = ((p1.value().flags & NVG_PT_CORNER) != 0) ? NVG_PT_CORNER : 0;
 
 			// Keep track of left turns.
-			cross = p1.dx * p0.dy - p0.dx * p1.dy;
+			cross = p1.value().dx * p0.value().dy - p0.value().dx * p1.value().dy;
 			if (cross > 0.0) {
 				nleft++;
-				p1.flags |= NVG_PT_LEFT;
+				p1.value().flags |= NVG_PT_LEFT;
 			}
 
 			// Calculate if we should use bevel or miter for inner join.
-			limit = nvg__maxf(1.01, nvg__minf(p0.len, p1.len) * iw);
+			limit = nvg__maxf(1.01, nvg__minf(p0.value().len, p1.value().len) * iw);
 			if ((dmr2 * limit*limit) < 1.0)
-				p1.flags |= NVG_PR_INNERBEVEL;
+				p1.value().flags |= NVG_PR_INNERBEVEL;
 
 			// Check to see if the corner needs to be beveled.
-			if ((p1.flags & NVG_PT_CORNER) != 0) {
+			if ((p1.value().flags & NVG_PT_CORNER) != 0) {
 				if ((dmr2 * miterLimit*miterLimit) < 1.0 || lineJoin == NVG_BEVEL || lineJoin == NVG_ROUND) {
-					p1.flags |= NVG_PT_BEVEL;
+					p1.value().flags |= NVG_PT_BEVEL;
 				}
 			}
 
-			if ((p1.flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0)
+			if ((p1.value().flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0)
 				path.nbevel++;
 
-			p0 = p1++;
+			p0 = p1.pointer(0); p1.inc();
 		}
 
 		path.convex = nleft == path.count;
@@ -1934,8 +2097,8 @@ static function nvg__calculateJoins(ctx: NVGcontext, w: Float, lineJoin: Int, mi
 static function nvg__expandStroke(ctx: NVGcontext, w: Float, fringe: Float, lineCap: Int, lineJoin: Int, miterLimit: Float): Int
 {
 	var cache: NVGpathCache = ctx.cache;
-	var verts: Vector<NVGvertex>;
-	var dst: Vector<NVGvertex>;
+	var verts: Pointer<NVGvertex>;
+	var dst: Pointer<NVGvertex>;
 	var cverts: Int;
 	var aa: Float = fringe;//ctx->fringeWidth;
 	var u0: Float = 0.0; var u1: Float = 1.0;
@@ -1975,79 +2138,80 @@ static function nvg__expandStroke(ctx: NVGcontext, w: Float, fringe: Float, line
 
 	for (i in 0...cache.npaths) {
 		var path: NVGpath = cache.paths[i];
-		var pts: Vector<NVGpoint> = cache.points[path.first];
-		var p0: NVGpoint;
-		var p1: NVGpoint;
+		var pts: Pointer<NVGpoint> = cache.points.pointer(path.first);
+		var p0: Pointer<NVGpoint>;
+		var p1: Pointer<NVGpoint>;
 		var s: Int; var e: Int; var loop: Bool;
 		var dx: Float; var dy: Float;
 
-		path.fill = 0;
+		path.fill = null;
 		path.nfill = 0;
 
 		// Calculate fringe or stroke
 		loop = path.closed != 0;
-		dst = verts;
-		path.stroke = dst;
+		dst = verts.pointer(0);
+		path.stroke = dst.pointer(0);
 
 		if (loop) {
 			// Looping
-			p0 = pts[path.count-1];
-			p1 = pts[0];
+			p0 = pts.pointer(path.count-1);
+			p1 = pts.pointer(0);
 			s = 0;
 			e = path.count;
 		} else {
 			// Add cap
-			p0 = pts[0];
-			p1 = pts[1];
+			p0 = pts.pointer(0);
+			p1 = pts.pointer(1);
 			s = 1;
 			e = path.count-1;
 		}
 
 		if (!loop) {
 			// Add cap
-			dx = p1.x - p0.x;
-			dy = p1.y - p0.y;
+			dx = p1.value().x - p0.value().x;
+			dy = p1.value().y - p0.value().y;
 			nvg__normalize(new Ref<Float>(dx), new Ref<Float>(dy));
 			if (lineCap == NVG_BUTT)
-				dst = nvg__buttCapStart(dst, p0, dx, dy, w, -aa*0.5, aa, u0, u1);
+				dst = nvg__buttCapStart(dst, p0.value(), dx, dy, w, -aa*0.5, aa, u0, u1);
 			else if (lineCap == NVG_BUTT || lineCap == NVG_SQUARE)
-				dst = nvg__buttCapStart(dst, p0, dx, dy, w, w-aa, aa, u0, u1);
+				dst = nvg__buttCapStart(dst, p0.value(), dx, dy, w, w-aa, aa, u0, u1);
 			else if (lineCap == NVG_ROUND)
-				dst = nvg__roundCapStart(dst, p0, dx, dy, w, ncap, aa, u0, u1);
+				dst = nvg__roundCapStart(dst, p0.value(), dx, dy, w, ncap, aa, u0, u1);
 		}
 
 		for (j in s...e) {
-			if ((p1.flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0) {
+			if ((p1.value().flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0) {
 				if (lineJoin == NVG_ROUND) {
-					dst = nvg__roundJoin(dst, p0, p1, w, w, u0, u1, ncap, aa);
+					dst = nvg__roundJoin(dst, p0.value(), p1.value(), w, w, u0, u1, ncap, aa);
 				} else {
-					dst = nvg__bevelJoin(dst, p0, p1, w, w, u0, u1, aa);
+					dst = nvg__bevelJoin(dst, p0.value(), p1.value(), w, w, u0, u1, aa);
 				}
 			} else {
-				nvg__vset(dst, p1->x + (p1->dmx * w), p1->y + (p1->dmy * w), u0,1); dst++;
-				nvg__vset(dst, p1->x - (p1->dmx * w), p1->y - (p1->dmy * w), u1,1); dst++;
+				nvg__vset(dst.value(), p1.value().x + (p1.value().dmx * w), p1.value().y + (p1.value().dmy * w), u0,1); dst.inc();
+				nvg__vset(dst.value(), p1.value().x - (p1.value().dmx * w), p1.value().y - (p1.value().dmy * w), u1,1); dst.inc();
 			}
-			p0 = p1++;
+			p0 = p1.pointer(0);
+			p1.inc();
 		}
 
 		if (loop) {
 			// Loop it
-			nvg__vset(dst, verts[0].x, verts[0].y, u0,1); dst++;
-			nvg__vset(dst, verts[1].x, verts[1].y, u1,1); dst++;
+			nvg__vset(dst.value(), verts.value(0).x, verts.value(0).y, u0,1); dst.inc();
+			nvg__vset(dst.value(), verts.value(1).x, verts.value(1).y, u1,1); dst.inc();
 		} else {
 			// Add cap
-			dx = p1.x - p0.x;
-			dy = p1.y - p0.y;
+			dx = p1.value().x - p0.value().x;
+			dy = p1.value().y - p0.value().y;
 			nvg__normalize(new Ref<Float>(dx), new Ref<Float>(dy));
 			if (lineCap == NVG_BUTT)
-				dst = nvg__buttCapEnd(dst, p1, dx, dy, w, -aa*0.5, aa, u0, u1);
+				dst = nvg__buttCapEnd(dst, p1.value(), dx, dy, w, -aa*0.5, aa, u0, u1);
 			else if (lineCap == NVG_BUTT || lineCap == NVG_SQUARE)
-				dst = nvg__buttCapEnd(dst, p1, dx, dy, w, w-aa, aa, u0, u1);
+				dst = nvg__buttCapEnd(dst, p1.value(), dx, dy, w, w-aa, aa, u0, u1);
 			else if (lineCap == NVG_ROUND)
-				dst = nvg__roundCapEnd(dst, p1, dx, dy, w, ncap, aa, u0, u1);
+				dst = nvg__roundCapEnd(dst, p1.value(), dx, dy, w, ncap, aa, u0, u1);
 		}
 
-		path.nstroke = Std.int(dst - verts);
+		path.nstroke = dst.sub(verts);
 
 		verts = dst;
 	}
@@ -2058,8 +2222,8 @@ static function nvg__expandStroke(ctx: NVGcontext, w: Float, fringe: Float, line
 static function nvg__expandFill(ctx: NVGcontext, w: Float, lineJoin: Int, miterLimit: Float): Int
 {
 	var cache: NVGpathCache = ctx.cache;
-	var verts: NVGvertex;
-	var dst: NVGvertex;
+	var verts: Pointer<NVGvertex>;
+	var dst: Pointer<NVGvertex>;
 	var cverts: Int; var convex: Bool;
 	var aa: Float = ctx.fringeWidth;
 	var fringe: Bool = w > 0.0;
@@ -2082,52 +2246,53 @@ static function nvg__expandFill(ctx: NVGcontext, w: Float, lineJoin: Int, miterL
 
 	for (i in 0...cache.npaths) {
 		var path: NVGpath = cache.paths[i];
-		var pts: Vector<NVGpoint> = cache.points[path.first];
-		var p0: NVGpoint;
-		var p1: NVGpoint;
+		var pts: Pointer<NVGpoint> = cache.points.pointer(path.first);
+		var p0: Pointer<NVGpoint>;
+		var p1: Pointer<NVGpoint>;
 		var rw: Float; var lw: Float; var woff: Float;
 		var ru: Float; var lu: Float;
 
 		// Calculate shape vertices.
 		woff = 0.5*aa;
-		dst = verts;
-		path.fill = dst;
+		dst = verts.pointer(0);
+		path.fill = dst.pointer(0);
 
 		if (fringe) {
 			// Looping
-			p0 = pts[path.count-1];
-			p1 = pts[0];
+			p0 = pts.pointer(path.count-1);
+			p1 = pts.pointer(0);
 			for (j in 0...path.count) {
-				if ((p1.flags & NVG_PT_BEVEL) != 0) {
-					var dlx0: Float = p0.dy;
-					var dly0: Float = -p0.dx;
-					var dlx1: Float = p1.dy;
-					var dly1: Float = -p1.dx;
-					if ((p1.flags & NVG_PT_LEFT) != 0) {
-						var lx: Float = p1.x + p1.dmx * woff;
-						var ly: Float = p1.y + p1.dmy * woff;
-						nvg__vset(dst, lx, ly, 0.5,1); dst++;
+				if ((p1.value().flags & NVG_PT_BEVEL) != 0) {
+					var dlx0: Float = p0.value().dy;
+					var dly0: Float = -p0.value().dx;
+					var dlx1: Float = p1.value().dy;
+					var dly1: Float = -p1.value().dx;
+					if ((p1.value().flags & NVG_PT_LEFT) != 0) {
+						var lx: Float = p1.value().x + p1.value().dmx * woff;
+						var ly: Float = p1.value().y + p1.value().dmy * woff;
+						nvg__vset(dst.value(), lx, ly, 0.5,1); dst.inc();
 					} else {
-						var lx0: Float = p1.x + dlx0 * woff;
-						var ly0: Float = p1.y + dly0 * woff;
-						var lx1: Float = p1.x + dlx1 * woff;
-						var ly1: Float = p1.y + dly1 * woff;
-						nvg__vset(dst, lx0, ly0, 0.5,1); dst++;
-						nvg__vset(dst, lx1, ly1, 0.5,1); dst++;
+						var lx0: Float = p1.value().x + dlx0 * woff;
+						var ly0: Float = p1.value().y + dly0 * woff;
+						var lx1: Float = p1.value().x + dlx1 * woff;
+						var ly1: Float = p1.value().y + dly1 * woff;
+						nvg__vset(dst.value(), lx0, ly0, 0.5,1); dst.inc();
+						nvg__vset(dst.value(), lx1, ly1, 0.5,1); dst.inc();
 					}
 				} else {
-					nvg__vset(dst, p1.x + (p1.dmx * woff), p1.y + (p1.dmy * woff), 0.5,1); dst++;
+					nvg__vset(dst.value(), p1.value().x + (p1.value().dmx * woff), p1.value().y + (p1.value().dmy * woff), 0.5,1); dst.inc();
 				}
-				p0 = p1++;
+				p0 = p1.pointer(0);
+				p1.inc();
 			}
 		} else {
 			for (j in 0...path.count) {
-				nvg__vset(dst, pts[j].x, pts[j].y, 0.5,1);
-				dst++;
+				nvg__vset(dst.value(), pts.value(j).x, pts.value(j).y, 0.5,1);
+				dst.inc();
 			}
 		}
 
-		path.nfill = Std.int(dst - verts);
+		path.nfill = dst.sub(verts);
 		verts = dst;
 
 		// Calculate fringe
@@ -2136,8 +2301,8 @@ static function nvg__expandFill(ctx: NVGcontext, w: Float, lineJoin: Int, miterL
 			rw = w - woff;
 			lu = 0;
 			ru = 1;
-			dst = verts;
-			path.stroke = dst;
+			dst = verts.pointer(0);
+			path.stroke = dst.pointer(0);
 
 			// Create only half a fringe for convex shapes so that
 			// the shape can be rendered without stenciling.
@@ -2147,24 +2312,25 @@ static function nvg__expandFill(ctx: NVGcontext, w: Float, lineJoin: Int, miterL
 			}
 
 			// Looping
-			p0 = pts[path.count-1];
-			p1 = pts[0];
+			p0 = pts.pointer(path.count-1);
+			p1 = pts.pointer(0);
 
 			for (j in 0...path.count) {
-				if ((p1.flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0) {
-					dst = nvg__bevelJoin(dst, p0, p1, lw, rw, lu, ru, ctx.fringeWidth);
+				if ((p1.value().flags & (NVG_PT_BEVEL | NVG_PR_INNERBEVEL)) != 0) {
+					dst = nvg__bevelJoin(dst, p0.value(), p1.value(), lw, rw, lu, ru, ctx.fringeWidth);
 				} else {
-					nvg__vset(dst, p1.x + (p1.dmx * lw), p1.y + (p1.dmy * lw), lu,1); dst++;
-					nvg__vset(dst, p1.x - (p1.dmx * rw), p1.y - (p1.dmy * rw), ru,1); dst++;
+					nvg__vset(dst.value(), p1.value().x + (p1.value().dmx * lw), p1.value().y + (p1.value().dmy * lw), lu,1); dst.inc();
+					nvg__vset(dst.value(), p1.value().x - (p1.value().dmx * rw), p1.value().y - (p1.value().dmy * rw), ru,1); dst.inc();
 				}
-				p0 = p1++;
+				p0 = p1.pointer(0);
+				p1.inc();
 			}
 
 			// Loop it
-			nvg__vset(dst, verts[0].x, verts[0].y, lu,1); dst++;
-			nvg__vset(dst, verts[1].x, verts[1].y, ru,1); dst++;
+			nvg__vset(dst.value(), verts.value(0).x, verts.value(0).y, lu,1); dst.inc();
+			nvg__vset(dst.value(), verts.value(1).x, verts.value(1).y, ru,1); dst.inc();
 
-			path.nstroke = Std.int(dst - verts);
+			path.nstroke = dst.sub(verts);
 			verts = dst;
 		} else {
 			path.stroke = null;
@@ -2423,12 +2589,12 @@ static function nvgDebugDumpPathCache(ctx: NVGcontext): Void
 		if (path.nfill != 0) {
 			trace("   - fill: " + path.nfill + "\n");
 			for (j in 0...path.nfill)
-				trace("" + path.fill[j].x + "\t" + path.fill[j].y + "\n");
+				trace("" + path.fill.value(j).x + "\t" + path.fill.value(j).y + "\n");
 		}
 		if (path.nstroke != 0) {
 			trace("   - stroke: " + path.nstroke + "\n");
 			for (j in 0...path.nstroke)
-				trace("" + path.stroke[j].x + "\t" + path.stroke[j].y + "\n");
+				trace("" + path.stroke.value(j).x + "\t" + path.stroke.value(j).y + "\n");
 		}
 	}
 }
@@ -2609,12 +2775,12 @@ static function nvg__flushTextTexture(ctx: NVGcontext): Void
 {
 	var dirty = new Vector<Int>(4);
 
-	if (fonsValidateTexture(ctx.fs, dirty)) {
+	if (fonsValidateTexture(ctx.fs, dirty) != null) {
 		var fontImage: Int = ctx.fontImages[ctx.fontImageIdx];
 		// Update texture
 		if (fontImage != 0) {
-			var iw: Int; var ih: Int;
-			var data: Array<Int> = fonsGetTextureData(ctx->fs, new Ref<Int>(iw), new Ref<Int>(ih));
+			var iw: Int = 0; var ih: Int = 0;
+			var data: Array<Int> = fonsGetTextureData(ctx.fs, new Ref<Int>(iw), new Ref<Int>(ih));
 			var x: Int = dirty[0];
 			var y: Int = dirty[1];
 			var w: Int = dirty[2] - dirty[0];
@@ -2624,12 +2790,12 @@ static function nvg__flushTextTexture(ctx: NVGcontext): Void
 	}
 }
 
-static function nvg__allocTextAtlas(ctx: NVGcontext): Int
+static function nvg__allocTextAtlas(ctx: NVGcontext): Bool
 {
-	var iw: Int; var ih: Int;
+	var iw: Int = 0; var ih: Int = 0;
 	nvg__flushTextTexture(ctx);
 	if (ctx.fontImageIdx >= NVG_MAX_FONTIMAGES-1)
-		return 0;
+		return false;
 	// if next fontImage already have a texture
 	if (ctx.fontImages[ctx.fontImageIdx+1] != 0)
 		nvgImageSize(ctx, ctx.fontImages[ctx.fontImageIdx+1], new Ref<Int>(iw), new Ref<Int>(ih));
@@ -2645,10 +2811,10 @@ static function nvg__allocTextAtlas(ctx: NVGcontext): Int
 	}
 	++ctx.fontImageIdx;
 	fonsResetAtlas(ctx.fs, iw, ih);
-	return 1;
+	return true;
 }
 
-static function nvg__renderText(ctx: NVGcontext, verts: Array<NVGvertex>, nverts: Int): Void
+static function nvg__renderText(ctx: NVGcontext, verts: Pointer<NVGvertex>, nverts: Int): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var paint: NVGpaint = state.fill;
@@ -2663,22 +2829,22 @@ static function nvg__renderText(ctx: NVGcontext, verts: Array<NVGvertex>, nverts
 	ctx.params.renderTriangles(ctx.params.userPtr, paint, state.compositeOperation, state.scissor, verts, nverts, ctx.fringeWidth);
 
 	ctx.drawCallCount++;
-	ctx.textTriCount += nverts/3;
+	ctx.textTriCount += Std.int(nverts/3);
 }
 
-static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end: String): Float
+static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: StringPointer, end: StringPointer): Float
 {
 	var state: NVGstate = nvg__getState(ctx);
-	var iter: FONStextIter; var prevIter: FONStextIter;
-	var q: FONSquad;
-	var verts: Vector<NVGvertex>;
+	var iter: FONStextIter = new FONStextIter(); var prevIter: FONStextIter;
+	var q: FONSquad = new FONSquad();
+	var verts: Pointer<NVGvertex>;
 	var scale: Float = nvg__getFontScale(state) * ctx.devicePxRatio;
 	var invscale: Float = 1.0 / scale;
 	var cverts: Int = 0;
 	var nverts: Int = 0;
 
 	if (end == null)
-		end = string + string.length;
+		end = string.pointer(string.length());
 
 	if (state.fontId == FONS_INVALID) return x;
 
@@ -2688,13 +2854,13 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 	fonsSetAlign(ctx.fs, state.textAlign);
 	fonsSetFont(ctx.fs, state.fontId);
 
-	cverts = nvg__maxi(2, Std.int(end - string)) * 6; // conservative estimate.
+	cverts = nvg__maxi(2, end.sub(string)) * 6; // conservative estimate.
 	verts = nvg__allocTempVerts(ctx, cverts);
 	if (verts == null) return x;
 
 	fonsTextIterInit(ctx.fs, iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_REQUIRED);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx.fs, iter, q)) {
+	while (fonsTextIterNext(ctx.fs, iter, q) != 0) {
 		var c = new Vector<Float>(4*2);
 		if (iter.prevGlyphIndex == -1) { // can not retrieve glyph?
 			if (nverts != 0) {
@@ -2716,12 +2882,12 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 		nvgTransformPoint(new Ref<Float>(c[6]),new Ref<Float>(c[7]), state.xform, q.x0*invscale, q.y1*invscale);
 		// Create triangles
 		if (nverts+6 <= cverts) {
-			nvg__vset(verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
-			nvg__vset(verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
-			nvg__vset(verts[nverts], c[2], c[3], q.s1, q.t0); nverts++;
-			nvg__vset(verts[nverts], c[0], c[1], q.s0, q.t0); nverts++;
-			nvg__vset(verts[nverts], c[6], c[7], q.s0, q.t1); nverts++;
-			nvg__vset(verts[nverts], c[4], c[5], q.s1, q.t1); nverts++;
+			nvg__vset(verts.value(nverts), c[0], c[1], q.s0, q.t0); nverts++;
+			nvg__vset(verts.value(nverts), c[4], c[5], q.s1, q.t1); nverts++;
+			nvg__vset(verts.value(nverts), c[2], c[3], q.s1, q.t0); nverts++;
+			nvg__vset(verts.value(nverts), c[0], c[1], q.s0, q.t0); nverts++;
+			nvg__vset(verts.value(nverts), c[6], c[7], q.s0, q.t1); nverts++;
+			nvg__vset(verts.value(nverts), c[4], c[5], q.s1, q.t1); nverts++;
 		}
 	}
 
@@ -2733,7 +2899,7 @@ static function nvgText(ctx: NVGcontext, x: Float, y: Float, string: String, end
 	return iter.nextx / scale;
 }
 
-static function nvgTextBox(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: String, end: String): Void
+static function nvgTextBox(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: StringPointer, end: StringPointer): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var rows = new Vector<NVGtextRow>(2);
@@ -2766,19 +2932,19 @@ static function nvgTextBox(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: F
 	state.textAlign = oldAlign;
 }
 
-static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, string: String, end: String, positions: Array<NVGglyphPosition>, maxPositions: Int): Int
+static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, string: StringPointer, end: StringPointer, positions: Array<NVGglyphPosition>, maxPositions: Int): Int
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var scale: Float = nvg__getFontScale(state) * ctx.devicePxRatio;
 	var invscale: Float = 1.0 / scale;
-	var iter: FONStextIter; var prevIter: FONStextIter;
-	var q: FONSquad;
+	var iter: FONStextIter = new FONStextIter(); var prevIter: FONStextIter;
+	var q: FONSquad = new FONSquad();
 	var npos: Int = 0;
 
 	if (state.fontId == FONS_INVALID) return 0;
 
 	if (end == null)
-		end = string + string.length;
+		end = string.pointer(string.length());
 
 	if (string == end)
 		return 0;
@@ -2791,7 +2957,7 @@ static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, strin
 
 	fonsTextIterInit(ctx.fs, iter, x*scale, y*scale, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx.fs, iter, q)) {
+	while (fonsTextIterNext(ctx.fs, iter, q) != 0) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?
 			iter = prevIter;
 			fonsTextIterNext(ctx.fs, iter, q); // try again
@@ -2809,24 +2975,24 @@ static function nvgTextGlyphPositions(ctx: NVGcontext, x: Float, y: Float, strin
 	return npos;
 }
 
-static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, breakRowWidth: Float, rows: Vector<NVGtextRow>, maxRows: Int): Int
+static function nvgTextBreakLines(ctx: NVGcontext, string: StringPointer, end: StringPointer, breakRowWidth: Float, rows: Vector<NVGtextRow>, maxRows: Int): Int
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var scale: Float = nvg__getFontScale(state) * ctx.devicePxRatio;
 	var invscale: Float = 1.0 / scale;
-	var iter: FONStextIter; var prevIter: FONStextIter;
-	var q: FONSquad;
+	var iter: FONStextIter = new FONStextIter(); var prevIter: FONStextIter;
+	var q: FONSquad = new FONSquad();
 	var nrows: Int = 0;
 	var rowStartX: Float = 0;
 	var rowWidth: Float = 0;
 	var rowMinX: Float = 0;
 	var rowMaxX: Float = 0;
-	var rowStart: String = null;
-	var rowEnd: String = null;
-	var wordStart: String = null;
+	var rowStart: StringPointer = null;
+	var rowEnd: StringPointer = null;
+	var wordStart: StringPointer = null;
 	var wordStartX: Float = 0;
 	var wordMinX: Float = 0;
-	var breakEnd: String = null;
+	var breakEnd: StringPointer = null;
 	var breakWidth: Float = 0;
 	var breakMaxX: Float = 0;
 	var type: Int = NVG_SPACE, ptype = NVG_SPACE;
@@ -2836,7 +3002,7 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 	if (state.fontId == FONS_INVALID) return 0;
 
 	if (end == null)
-		end = string + string.length;
+		end = string.pointer(string.length());
 
 	if (string == end) return 0;
 
@@ -2850,7 +3016,7 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 
 	fonsTextIterInit(ctx.fs, iter, 0, 0, string, end, FONS_GLYPH_BITMAP_OPTIONAL);
 	prevIter = iter;
-	while (fonsTextIterNext(ctx.fs, iter, q)) {
+	while (fonsTextIterNext(ctx.fs, iter, q) != 0) {
 		if (iter.prevGlyphIndex < 0 && nvg__allocTextAtlas(ctx)) { // can not retrieve glyph?
 			iter = prevIter;
 			fonsTextIterNext(ctx.fs, iter, q); // try again
@@ -2888,8 +3054,8 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 
 		if (type == NVG_NEWLINE) {
 			// Always handle new lines.
-			rows[nrows].start = rowStart != NULL ? rowStart : iter.str;
-			rows[nrows].end = rowEnd != NULL ? rowEnd : iter.str;
+			rows[nrows].start = rowStart != null ? rowStart : iter.str;
+			rows[nrows].end = rowEnd != null ? rowEnd : iter.str;
 			rows[nrows].width = rowWidth * invscale;
 			rows[nrows].minx = rowMinX * invscale;
 			rows[nrows].maxx = rowMaxX * invscale;
@@ -2902,12 +3068,12 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 			breakWidth = 0.0;
 			breakMaxX = 0.0;
 			// Indicate to skip the white space at the beginning of the row.
-			rowStart = NULL;
-			rowEnd = NULL;
+			rowStart = null;
+			rowEnd = null;
 			rowWidth = 0;
 			rowMinX = rowMaxX = 0;
 		} else {
-			if (rowStart == NULL) {
+			if (rowStart == null) {
 				// Skip white space until the beginning of the line
 				if (type == NVG_CHAR || type == NVG_CJK_CHAR) {
 					// The current char is the row so far
@@ -3015,7 +3181,7 @@ static function nvgTextBreakLines(ctx: NVGcontext, string: String, end: String, 
 	return nrows;
 }
 
-static function nvgTextBounds(ctx: NVGcontext, x: Float, y: Float, string: String, end: String, bounds: Array<Float>): Float
+static function nvgTextBounds(ctx: NVGcontext, x: Float, y: Float, string: StringPointer, end: StringPointer, bounds: Vector<Float>): Float
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var scale: Float = nvg__getFontScale(state) * ctx.devicePxRatio;
@@ -3042,7 +3208,7 @@ static function nvgTextBounds(ctx: NVGcontext, x: Float, y: Float, string: Strin
 	return width * invscale;
 }
 
-static function nvgTextBoxBounds(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: String, end: String, bounds: Array<Float>): Void
+static function nvgTextBoxBounds(ctx: NVGcontext, x: Float, y: Float, breakRowWidth: Float, string: StringPointer, end: StringPointer, bounds: Array<Float>): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var rows = new Vector<NVGtextRow>(2);
@@ -3137,6 +3303,8 @@ static function nvgTextMetrics(ctx: NVGcontext, ascender: Ref<Float>, descender:
 
 static final FONS_INVALID: Int = -1;
 static final FONS_ZERO_TOPLEFT: Int = 0;
+static final FONS_GLYPH_BITMAP_OPTIONAL: Int = 0;
+static final FONS_GLYPH_BITMAP_REQUIRED: Int = 0;
 
 static function fonsSetSize(fs: FONScontext, size: Float): Void {}
 static function fonsSetSpacing(fs: FONScontext, size: Float): Void {}
@@ -3150,12 +3318,39 @@ static function fonsResetAtlas(fs: FONScontext, w: Int, h: Int): Void {}
 static function fonsAddFont(fs: FONScontext, name: String, filename: String, value: Int): Int { return 0; }
 static function fonsAddFallbackFont(fs: FONScontext, baseFont: Int, fallbackFont: Int): Int { return 0; }
 static function fonsDeleteInternal(fs: FONScontext): Void {}
+static function fonsCreateInternal(params: FONSparams): FONScontext { return null; }
+static function fonsTextBounds(s: FONScontext, x: Float, y: Float, string: StringPointer, end: StringPointer, bounds: Vector<Float>): Float { return 0; }
+static function fonsTextIterInit(stash: FONScontext, iter: FONStextIter, x: Float, y: Float, str: StringPointer, end: StringPointer, bitmapOption: Int): Int { return 0; }
+static function fonsTextIterNext(stash: FONScontext, iter: FONStextIter, quad: FONSquad): Int { return 0; }
+static function fonsAddFontMem(stash: FONScontext, name: String, data: Array<Int>, dataSize: Int, freeData: Int, fontIndex: Int): Int { return 0; }
+static function fonsResetFallbackFont(stash: FONScontext, base: Int): Void {}
+static function fonsValidateTexture(stash: FONScontext, dirty: Vector<Int>): Int { return 0; }
+static function fonsGetTextureData(stash: FONScontext, width: Ref<Int>, height: Ref<Int>): Array<Int> { return null; }
 }
 
 class FONScontext {}
-class FONSquad {}
+class FONSquad {
+	public var x0: Float;
+	public var x1: Float;
+	public var y0: Float;
+	public var y1: Float;
+	public var s0: Float;
+	public var s1: Float;
+	public var t0: Float;
+	public var t1: Float;
+
+	public function new() {}
+}
 class FONStextIter {
 	public var nextx: Float;
+	public var str: StringPointer;
+	public var x: Float;
+	public var y: Float;
+	public var prevGlyphIndex: Int;
+	public var codepoint: Int;
+	public var next: StringPointer;
+
+	public function new() {}
 }
 class FONSparams {
 	public var width: Int;
