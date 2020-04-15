@@ -2,8 +2,12 @@ package nanovg;
 
 import haxe.ds.Vector;
 
-class NVGKparams extends NVGparams {
-	override public function renderCreate(uptr: Dynamic): Int { return 0; }
+class KhaParams extends NVGparams {
+	override public function renderCreate(uptr: Dynamic): Int {
+		var kha: KhaContext = uptr;
+		var align: Int = 4;
+		return 1;
+	}
 	override public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int { return 0; }
 	override public function renderDeleteTexture(uptr: Dynamic, image: Int): Int { return 0; }
 	override public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: Array<Int>): Int { return 0; }

@@ -3150,9 +3150,20 @@ static function fonsValidateTexture(stash: FONScontext, dirty: Vector<Int>): Int
 static function fonsGetTextureData(stash: FONScontext, width: Ref<Int>, height: Ref<Int>): Array<Int> { return null; }
 
 public static function nvgCreateKha(flags: Int): NVGcontext {
-	var context = new NVGcontext();
-	context.params = new NVGKparams();
-	return context;
+	var params = new KhaParams();
+	var ctx: NVGcontext = null;
+	var kha: KhaContext = new KhaContext();
+	if (kha == null) return null;
+
+	params.userPtr = kha;
+	params.edgeAntiAlias = (flags & NVG_ANTIALIAS != 0) ? 1 : 0;
+
+	kha.flags = flags;
+
+	ctx = nvgCreateInternal(params);
+	if (ctx == null) return null;
+
+	return ctx;
 }
 }
 
