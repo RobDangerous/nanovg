@@ -20,44 +20,6 @@ package nanovg;
 
 import haxe.ds.Vector;
 
-class Ref<T> {
-	public var value: T;
-
-	public function new(value: T) {
-		this.value = value;
-	}
-}
-
-class Pointer<T> {
-	var arr: Vector<T>;
-	var index: Int;
-
-	public function new(arr: Vector<T>, index: Int = 0) {
-		this.arr = arr;
-		this.index = index;
-	}
-
-	public inline function value(index: Int = 0): T {
-		return arr[this.index + index];
-	}
-
-	public inline function setValue(index: Int, value: T): Void {
-		arr[this.index + index] = value;
-	}
-
-	public inline function inc(): Void {
-		++index;
-	}
-
-	public inline function pointer(index: Int): Pointer<T> {
-		return new Pointer<T>(arr, this.index + index);
-	}
-
-	public inline function sub(pointer: Pointer<T>): Int {
-		return index - pointer.index;
-	}
-}
-
 class StringPointer {
 	var string: String;
 	var index: Int;
@@ -85,69 +47,6 @@ class StringPointer {
 
 	public inline function length(): Int {
 		return string.length - index;
-	}
-}
-
-class NVGcolor {
-	public var r: Float;
-	public var g: Float;
-	public var b: Float;
-	public var a: Float;
-
-	public function new() {
-		r = g = b = a = 0;
-	}
-
-	public function copyTo(color: NVGcolor): Void {
-		color.r = r;
-		color.g = g;
-		color.b = b;
-		color.a = a;
-	}
-}
-
-class NVGpaint {
-	public var xform: Vector<Float>;
-	public var extent: Vector<Float>;
-	public var radius: Float;
-	public var feather: Float;
-	public var innerColor: NVGcolor;
-	public var outerColor: NVGcolor;
-	public var image: Int;
-
-	public function new() {
-		xform = new Vector<Float>(6);
-		extent = new Vector<Float>(2);
-		innerColor = new NVGcolor();
-		outerColor = new NVGcolor();
-	}
-
-	public function nullify(): Void {
-		for (i in 0...xform.length) {
-			xform[i] = 0.0;
-		}
-		for (i in 0...extent.length) {
-			extent[i] = 0.0;
-		}
-		radius = 0.0;
-		feather = 0.0;
-		innerColor.r = innerColor.g = innerColor.b = innerColor.a = 0;
-		outerColor.r = outerColor.g = outerColor.b = outerColor.a = 0;
-		image = 0;
-	}
-
-	public function copyTo(paint: NVGpaint): Void {
-		for (i in 0...xform.length) {
-			paint.xform[i] = xform[i];
-		}
-		for (i in 0...extent.length) {
-			paint.extent[i] = extent[i];
-		}
-		paint.radius = radius;
-		paint.feather = feather;
-		innerColor.copyTo(paint.innerColor);
-		outerColor.copyTo(paint.outerColor);
-		paint.image = image;
 	}
 }
 
@@ -209,27 +108,6 @@ enum abstract NVGcompositeOperation(Int) from Int to Int {
 	var NVG_XOR;
 }
 
-class NVGcompositeOperationState {
-	public var srcRGB: Int;
-	public var dstRGB: Int;
-	public var srcAlpha: Int;
-	public var dstAlpha: Int;
-
-	public function new() {
-		srcRGB = 0;
-		dstRGB = 0;
-		srcAlpha = 0;
-		dstAlpha = 0;
-	}
-
-	public function copyTo(state: NVGcompositeOperationState): Void {
-		state.srcRGB = srcRGB;
-		state.dstRGB = dstRGB;
-		state.srcAlpha = srcAlpha;
-		state.dstAlpha = dstAlpha;
-	}
-}
-
 class NVGglyphPosition {
 	public var str: StringPointer;	// Position of the glyph in the input string.
 	public var x: Float;			// The x-coordinate of the logical glyph position.
@@ -256,72 +134,6 @@ enum abstract NVGimageFlags(Int) {
 enum abstract NVGtexture(Int) from Int to Int {
 	var NVG_TEXTURE_ALPHA = 0x01;
 	var NVG_TEXTURE_RGBA = 0x02;
-}
-
-class NVGscissor {
-	public var xform: Vector<Float>;
-	public var extent: Vector<Float>;
-
-	public function new() {
-		xform = new Vector<Float>(6);
-		extent = new Vector<Float>(2);
-	}
-
-	public function copyTo(scissor: NVGscissor): Void {
-		for (i in 0...xform.length) {
-			scissor.xform[i] = xform[i];
-		}
-		for (i in 0...extent.length) {
-			scissor.extent[i] = extent[i];
-		}
-	}
-}
-
-class NVGvertex {
-	public var x: Float; public var y: Float; public var u: Float; public var v: Float;
-}
-
-class NVGpath {
-	public var first: Int;
-	public var count: Int;
-	public var closed: Int;
-	public var nbevel: Int;
-	public var fill: Pointer<NVGvertex>;
-	public var nfill: Int;
-	public var stroke: Pointer<NVGvertex>;
-	public var nstroke: Int;
-	public var winding: Int;
-	public var convex: Bool;
-
-	public function nullify(): Void {
-		first = 0;
-		count = 0;
-		closed = 0;
-		nbevel = 0;
-		fill = null;
-		nfill = 0;
-		stroke = null;
-		nstroke = 0;
-		winding = 0;
-		convex = false;
-	}
-}
-
-class NVGparams {
-	public var userPtr: Dynamic;
-	public var edgeAntiAlias: Int;
-	public function renderCreate(uptr: Dynamic): Int { return 0; }
-	public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int { return 0; }
-	public function renderDeleteTexture(uptr: Dynamic, image: Int): Int { return 0; }
-	public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: Array<Int>): Int { return 0; }
-	public function renderGetTextureSize(uptr: Dynamic, image: Int, w: Ref<Int>, h: Ref<Int>): Int { return 0; }
-	public function renderViewport(uptr: Dynamic, width: Float, height: Float, devicePixelRatio: Float): Void {}
-	public function renderCancel(uptr: Dynamic): Void {}
-	public function renderFlush(uptr: Dynamic): Void {}
-	public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {}
-	public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {}
-	public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {}
-	public function renderDelete(uptr: Dynamic): Void {}
 }
 
 enum abstract NVGcommands(Int) from Int to Int {
@@ -470,6 +282,16 @@ enum abstract NVGcodepointType(Int) from Int to Int {
 	var NVG_NEWLINE;
 	var NVG_CHAR;
 	var NVG_CJK_CHAR;
+}
+
+enum abstract NVGcreateFlags(Int) from Int to Int {
+	// Flag indicating if geometry based anti-aliasing is used (may not be needed when using MSAA).
+	var NVG_ANTIALIAS 		= 1<<0;
+	// Flag indicating if strokes should be drawn using stencil buffer. The rendering will be a little
+	// slower, but path overlaps (i.e. self-intersecting or sharp turns) will be drawn just once.
+	var NVG_STENCIL_STROKES	= 1<<1;
+	// Flag indicating that additional debug checks are done.
+	var NVG_DEBUG 			= 1<<2;
 }
 
 class NVG {
@@ -639,7 +461,7 @@ static function nvg__getState(ctx: NVGcontext): NVGstate
 	return ctx.states[ctx.nstates-1];
 }
 
-static function nvgCreateInternal(params: NVGparams): NVGcontext
+public static function nvgCreateInternal(params: NVGparams): NVGcontext
 {
 	var fontParams: FONSparams;
 	var ctx: NVGcontext = new NVGcontext();
@@ -688,12 +510,12 @@ static function nvgCreateInternal(params: NVGparams): NVGcontext
 	return ctx;
 }
 
-static function nvgInternalParams(ctx: NVGcontext): NVGparams
+public static function nvgInternalParams(ctx: NVGcontext): NVGparams
 {
     return ctx.params;
 }
 
-static function nvgDeleteInternal(ctx: NVGcontext): Void
+public static function nvgDeleteInternal(ctx: NVGcontext): Void
 {
 	var i: Int;
 	if (ctx == null) return;
@@ -716,7 +538,7 @@ static function nvgDeleteInternal(ctx: NVGcontext): Void
 	// free(ctx);
 }
 
-static function nvgBeginFrame(ctx: NVGcontext, windowWidth: Float, windowHeight: Float, devicePixelRatio: Float): Void
+public static function nvgBeginFrame(ctx: NVGcontext, windowWidth: Float, windowHeight: Float, devicePixelRatio: Float): Void
 {
 /*	printf("Tris: draws:%d  fill:%d  stroke:%d  text:%d  TOT:%d\n",
 		ctx->drawCallCount, ctx->fillTriCount, ctx->strokeTriCount, ctx->textTriCount,
@@ -736,12 +558,12 @@ static function nvgBeginFrame(ctx: NVGcontext, windowWidth: Float, windowHeight:
 	ctx.textTriCount = 0;
 }
 
-static function nvgCancelFrame(ctx: NVGcontext): Void
+public static function nvgCancelFrame(ctx: NVGcontext): Void
 {
 	ctx.params.renderCancel(ctx.params.userPtr);
 }
 
-static function nvgEndFrame(ctx: NVGcontext): Void
+public static function nvgEndFrame(ctx: NVGcontext): Void
 {
 	ctx.params.renderFlush(ctx.params.userPtr);
 	if (ctx.fontImageIdx != 0) {
@@ -772,17 +594,17 @@ static function nvgEndFrame(ctx: NVGcontext): Void
 	}
 }
 
-static function nvgRGB(r: Int, g: Int, b: Int): NVGcolor
+public static function nvgRGB(r: Int, g: Int, b: Int): NVGcolor
 {
 	return nvgRGBA(r,g,b,255);
 }
 
-static function nvgRGBf(r: Float, g: Float, b: Float): NVGcolor
+public static function nvgRGBf(r: Float, g: Float, b: Float): NVGcolor
 {
 	return nvgRGBAf(r,g,b,1.0);
 }
 
-static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
+public static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
 {
 	var color: NVGcolor = new NVGcolor();
 	// Use longer initialization to suppress warning.
@@ -793,7 +615,7 @@ static function nvgRGBA(r: Int, g: Int, b: Int, a: Int): NVGcolor
 	return color;
 }
 
-static function nvgRGBAf(r: Float, g: Float, b: Float, a: Float): NVGcolor
+public static function nvgRGBAf(r: Float, g: Float, b: Float, a: Float): NVGcolor
 {
 	var color: NVGcolor = new NVGcolor();
 	// Use longer initialization to suppress warning.
@@ -804,19 +626,19 @@ static function nvgRGBAf(r: Float, g: Float, b: Float, a: Float): NVGcolor
 	return color;
 }
 
-static function nvgTransRGBA(c: NVGcolor, a: Int): NVGcolor
+public static function nvgTransRGBA(c: NVGcolor, a: Int): NVGcolor
 {
 	c.a = a / 255.0;
 	return c;
 }
 
-static function nvgTransRGBAf(c: NVGcolor, a: Float): NVGcolor
+public static function nvgTransRGBAf(c: NVGcolor, a: Float): NVGcolor
 {
 	c.a = a;
 	return c;
 }
 
-static function nvgLerpRGBA(c0: NVGcolor, c1: NVGcolor, u: Float): NVGcolor
+public static function nvgLerpRGBA(c0: NVGcolor, c1: NVGcolor, u: Float): NVGcolor
 {
 	// var i: Int;
 	var oneminu: Float;
@@ -835,7 +657,7 @@ static function nvgLerpRGBA(c0: NVGcolor, c1: NVGcolor, u: Float): NVGcolor
 	return cint;
 }
 
-static function nvgHSL(h: Float, s: Float, l: Float): NVGcolor
+public static function nvgHSL(h: Float, s: Float, l: Float): NVGcolor
 {
 	return nvgHSLA(h,s,l,255);
 }
@@ -853,7 +675,7 @@ static function nvg__hue(h: Float, m1: Float, m2: Float): Float
 	return m1;
 }
 
-static function nvgHSLA(h: Float, s: Float, l: Float, a: Int): NVGcolor
+public static function nvgHSLA(h: Float, s: Float, l: Float, a: Int): NVGcolor
 {
 	var m1: Float; var m2: Float;
 	var col: NVGcolor = new NVGcolor();
@@ -870,28 +692,28 @@ static function nvgHSLA(h: Float, s: Float, l: Float, a: Int): NVGcolor
 	return col;
 }
 
-static function nvgTransformIdentity(t: Vector<Float>): Void
+public static function nvgTransformIdentity(t: Vector<Float>): Void
 {
 	t[0] = 1.0; t[1] = 0.0;
 	t[2] = 0.0; t[3] = 1.0;
 	t[4] = 0.0; t[5] = 0.0;
 }
 
-static function nvgTransformTranslate(t: Vector<Float>, tx: Float, ty: Float): Void
+public static function nvgTransformTranslate(t: Vector<Float>, tx: Float, ty: Float): Void
 {
 	t[0] = 1.0; t[1] = 0.0;
 	t[2] = 0.0; t[3] = 1.0;
 	t[4] = tx; t[5] = ty;
 }
 
-static function nvgTransformScale(t: Vector<Float>, sx: Float, sy: Float): Void
+public static function nvgTransformScale(t: Vector<Float>, sx: Float, sy: Float): Void
 {
 	t[0] = sx; t[1] = 0.0;
 	t[2] = 0.0; t[3] = sy;
 	t[4] = 0.0; t[5] = 0.0;
 }
 
-static function nvgTransformRotate(t: Vector<Float>, a: Float): Void
+public static function nvgTransformRotate(t: Vector<Float>, a: Float): Void
 {
 	var cs: Float = nvg__cosf(a), sn = nvg__sinf(a);
 	t[0] = cs; t[1] = sn;
@@ -899,21 +721,21 @@ static function nvgTransformRotate(t: Vector<Float>, a: Float): Void
 	t[4] = 0.0; t[5] = 0.0;
 }
 
-static function nvgTransformSkewX(t: Vector<Float>, a: Float): Void
+public static function nvgTransformSkewX(t: Vector<Float>, a: Float): Void
 {
 	t[0] = 1.0; t[1] = 0.0;
 	t[2] = nvg__tanf(a); t[3] = 1.0;
 	t[4] = 0.0; t[5] = 0.0;
 }
 
-static function nvgTransformSkewY(t: Vector<Float>, a: Float): Void
+public static function nvgTransformSkewY(t: Vector<Float>, a: Float): Void
 {
 	t[0] = 1.0; t[1] = nvg__tanf(a);
 	t[2] = 0.0; t[3] = 1.0;
 	t[4] = 0.0; t[5] = 0.0;
 }
 
-static function nvgTransformMultiply(t: Vector<Float>, s: Vector<Float>): Void
+public static function nvgTransformMultiply(t: Vector<Float>, s: Vector<Float>): Void
 {
 	var t0: Float = t[0] * s[0] + t[1] * s[2];
 	var t2: Float = t[2] * s[0] + t[3] * s[2];
@@ -926,7 +748,7 @@ static function nvgTransformMultiply(t: Vector<Float>, s: Vector<Float>): Void
 	t[4] = t4;
 }
 
-static function nvgTransformPremultiply(t: Vector<Float>, s: Vector<Float>): Void
+public static function nvgTransformPremultiply(t: Vector<Float>, s: Vector<Float>): Void
 {
 	var s2 = new Vector<Float>(6);
 	for (i in 0...6) {
@@ -938,7 +760,7 @@ static function nvgTransformPremultiply(t: Vector<Float>, s: Vector<Float>): Voi
 	}
 }
 
-static function nvgTransformInverse(inv: Vector<Float>, t: Vector<Float>): Int
+public static function nvgTransformInverse(inv: Vector<Float>, t: Vector<Float>): Int
 {
 	var invdet: Float; var det: Float = t[0] * t[3] - t[2] * t[1];
 	if (det > -1e-6 && det < 1e-6) {
@@ -955,23 +777,23 @@ static function nvgTransformInverse(inv: Vector<Float>, t: Vector<Float>): Int
 	return 1;
 }
 
-static function nvgTransformPoint(dx: Ref<Float>, dy: Ref<Float>, t: Vector<Float>, sx: Float, sy: Float): Void
+public static function nvgTransformPoint(dx: Ref<Float>, dy: Ref<Float>, t: Vector<Float>, sx: Float, sy: Float): Void
 {
 	dx.value = sx*t[0] + sy*t[2] + t[4];
 	dy.value = sx*t[1] + sy*t[3] + t[5];
 }
 
-static function nvgDegToRad(deg: Float): Float
+public static function nvgDegToRad(deg: Float): Float
 {
 	return deg / 180.0 * NVG_PI;
 }
 
-static function nvgRadToDeg(rad: Float): Float
+public static function nvgRadToDeg(rad: Float): Float
 {
 	return rad / NVG_PI * 180.0;
 }
 
-static function nvg__setPaintColor(p: NVGpaint, color: NVGcolor): Void
+public static function nvg__setPaintColor(p: NVGpaint, color: NVGcolor): Void
 {
 	p.nullify();
 	nvgTransformIdentity(p.xform);
@@ -983,7 +805,7 @@ static function nvg__setPaintColor(p: NVGpaint, color: NVGcolor): Void
 
 
 // State handling
-static function nvgSave(ctx: NVGcontext): Void
+public static function nvgSave(ctx: NVGcontext): Void
 {
 	if (ctx.nstates >= NVG_MAX_STATES)
 		return;
@@ -992,14 +814,14 @@ static function nvgSave(ctx: NVGcontext): Void
 	ctx.nstates++;
 }
 
-static function nvgRestore(ctx: NVGcontext): Void
+public static function nvgRestore(ctx: NVGcontext): Void
 {
 	if (ctx.nstates <= 1)
 		return;
 	ctx.nstates--;
 }
 
-static function nvgReset(ctx: NVGcontext): Void
+public static function nvgReset(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.nullify();
@@ -1027,43 +849,43 @@ static function nvgReset(ctx: NVGcontext): Void
 }
 
 // State setting
-static function nvgShapeAntiAlias(ctx: NVGcontext, enabled: Int): Void
+public static function nvgShapeAntiAlias(ctx: NVGcontext, enabled: Int): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.shapeAntiAlias = enabled;
 }
 
-static function nvgStrokeWidth(ctx: NVGcontext, width: Float): Void
+public static function nvgStrokeWidth(ctx: NVGcontext, width: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.strokeWidth = width;
 }
 
-static function nvgMiterLimit(ctx: NVGcontext, limit: Float): Void
+public static function nvgMiterLimit(ctx: NVGcontext, limit: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.miterLimit = limit;
 }
 
-static function nvgLineCap(ctx: NVGcontext, cap: Int): Void
+public static function nvgLineCap(ctx: NVGcontext, cap: Int): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.lineCap = cap;
 }
 
-static function nvgLineJoin(ctx: NVGcontext, join: Int): Void
+public static function nvgLineJoin(ctx: NVGcontext, join: Int): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.lineJoin = join;
 }
 
-static function nvgGlobalAlpha(ctx: NVGcontext, alpha: Float): Void
+public static function nvgGlobalAlpha(ctx: NVGcontext, alpha: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.alpha = alpha;
 }
 
-static function nvgTransform(ctx: NVGcontext, a: Float, b: Float, c: Float, d: Float, e: Float, f: Float): Void
+public static function nvgTransform(ctx: NVGcontext, a: Float, b: Float, c: Float, d: Float, e: Float, f: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1071,13 +893,13 @@ static function nvgTransform(ctx: NVGcontext, a: Float, b: Float, c: Float, d: F
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgResetTransform(ctx: NVGcontext): Void
+public static function nvgResetTransform(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	nvgTransformIdentity(state.xform);
 }
 
-static function nvgTranslate(ctx: NVGcontext, x: Float, y: Float): Void
+public static function nvgTranslate(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1085,7 +907,7 @@ static function nvgTranslate(ctx: NVGcontext, x: Float, y: Float): Void
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgRotate(ctx: NVGcontext, angle: Float): Void
+public static function nvgRotate(ctx: NVGcontext, angle: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1093,7 +915,7 @@ static function nvgRotate(ctx: NVGcontext, angle: Float): Void
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgSkewX(ctx: NVGcontext, angle: Float): Void
+public static function nvgSkewX(ctx: NVGcontext, angle: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1101,7 +923,7 @@ static function nvgSkewX(ctx: NVGcontext, angle: Float): Void
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgSkewY(ctx: NVGcontext, angle: Float): Void
+public static function nvgSkewY(ctx: NVGcontext, angle: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1109,7 +931,7 @@ static function nvgSkewY(ctx: NVGcontext, angle: Float): Void
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgScale(ctx: NVGcontext, x: Float, y: Float): Void
+public static function nvgScale(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var t = new Vector<Float>(6);
@@ -1117,7 +939,7 @@ static function nvgScale(ctx: NVGcontext, x: Float, y: Float): Void
 	nvgTransformPremultiply(state.xform, t);
 }
 
-static function nvgCurrentTransform(ctx: NVGcontext, xform: Array<Float>): Void
+public static function nvgCurrentTransform(ctx: NVGcontext, xform: Array<Float>): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	if (xform == null) return;
@@ -1126,33 +948,33 @@ static function nvgCurrentTransform(ctx: NVGcontext, xform: Array<Float>): Void
 	}
 }
 
-static function nvgStrokeColor(ctx: NVGcontext, color: NVGcolor): Void
+public static function nvgStrokeColor(ctx: NVGcontext, color: NVGcolor): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	nvg__setPaintColor(state.stroke, color);
 }
 
-static function nvgStrokePaint(ctx: NVGcontext, paint: NVGpaint): Void
+public static function nvgStrokePaint(ctx: NVGcontext, paint: NVGpaint): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.stroke = paint;
 	nvgTransformMultiply(state.stroke.xform, state.xform);
 }
 
-static function nvgFillColor(ctx: NVGcontext, color: NVGcolor): Void
+public static function nvgFillColor(ctx: NVGcontext, color: NVGcolor): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	nvg__setPaintColor(state.fill, color);
 }
 
-static function nvgFillPaint(ctx: NVGcontext, paint: NVGpaint): Void
+public static function nvgFillPaint(ctx: NVGcontext, paint: NVGpaint): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.fill = paint;
 	nvgTransformMultiply(state.fill.xform, state.xform);
 }
 
-static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: Int): Int
+public static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: Int): Int
 {
 	var w: Int = 0; var h: Int = 0; var n: Int; var image: Int;
 	var img: Array<Int> = null;
@@ -1168,7 +990,7 @@ static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: In
 	return image;
 }
 
-static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<Int>, ndata: Int): Int
+public static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<Int>, ndata: Int): Int
 {
 	var w: Int = 0; var h: Int = 0; var n: Int; var image: Int;
 	var img: Array<Int> = null; //**stbi_load_from_memory(data, ndata, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
@@ -1181,29 +1003,29 @@ static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<
 	return image;
 }
 
-static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int
+public static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int
 {
 	return ctx.params.renderCreateTexture(ctx.params.userPtr, NVG_TEXTURE_RGBA, w, h, imageFlags, data);
 }
 
-static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void
+public static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void
 {
 	var w: Int = 0; var h: Int = 0;
 	ctx.params.renderGetTextureSize(ctx.params.userPtr, image, new Ref<Int>(w), new Ref<Int>(h));
 	ctx.params.renderUpdateTexture(ctx.params.userPtr, image, 0,0, w,h, data);
 }
 
-static function nvgImageSize(ctx: NVGcontext, image: Int, w: Ref<Int>, h: Ref<Int>): Void
+public static function nvgImageSize(ctx: NVGcontext, image: Int, w: Ref<Int>, h: Ref<Int>): Void
 {
 	ctx.params.renderGetTextureSize(ctx.params.userPtr, image, w, h);
 }
 
-static function nvgDeleteImage(ctx: NVGcontext, image: Int): Void
+public static function nvgDeleteImage(ctx: NVGcontext, image: Int): Void
 {
 	ctx.params.renderDeleteTexture(ctx.params.userPtr, image);
 }
 
-static function nvgLinearGradient(ctx: NVGcontext,
+public static function nvgLinearGradient(ctx: NVGcontext,
 								  sx: Float, sy: Float, ex: Float, ey: Float,
 								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
@@ -1242,7 +1064,7 @@ static function nvgLinearGradient(ctx: NVGcontext,
 	return p;
 }
 
-static function nvgRadialGradient(ctx: NVGcontext,
+public static function nvgRadialGradient(ctx: NVGcontext,
 								  cx: Float, cy: Float, inr: Float, outr: Float,
 								  icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
@@ -1269,7 +1091,7 @@ static function nvgRadialGradient(ctx: NVGcontext,
 	return p;
 }
 
-static function nvgBoxGradient(ctx: NVGcontext,
+public static function nvgBoxGradient(ctx: NVGcontext,
 							   x: Float, y: Float, w: Float, h: Float, r: Float, f: Float,
 							   icol: NVGcolor, ocol: NVGcolor): NVGpaint
 {
@@ -1295,7 +1117,7 @@ static function nvgBoxGradient(ctx: NVGcontext,
 }
 
 
-static function nvgImagePattern(ctx: NVGcontext,
+public static function nvgImagePattern(ctx: NVGcontext,
 								cx: Float, cy: Float, w: Float, h: Float, angle: Float,
 								image: Int, alpha: Float): NVGpaint
 {
@@ -1318,7 +1140,7 @@ static function nvgImagePattern(ctx: NVGcontext,
 }
 
 // Scissoring
-static function nvgScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
+public static function nvgScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 
@@ -1348,7 +1170,7 @@ static function nvg__isectRects(dst: Vector<Float>,
 	dst[3] = nvg__maxf(0.0, maxy - miny);
 }
 
-static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
+public static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var pxform = new Vector<Float>(6); var invxorm = new Vector<Float>(6);
@@ -1379,7 +1201,7 @@ static function nvgIntersectScissor(ctx: NVGcontext, x: Float, y: Float, w: Floa
 	nvgScissor(ctx, rect[0], rect[1], rect[2], rect[3]);
 }
 
-static function nvgResetScissor(ctx: NVGcontext): Void
+public static function nvgResetScissor(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	for (i in 0...state.scissor.xform.length) {
@@ -1390,18 +1212,18 @@ static function nvgResetScissor(ctx: NVGcontext): Void
 }
 
 // Global composite operation.
-static function nvgGlobalCompositeOperation(ctx: NVGcontext, op: Int): Void
+public static function nvgGlobalCompositeOperation(ctx: NVGcontext, op: Int): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	state.compositeOperation = nvg__compositeOperationState(op);
 }
 
-static function nvgGlobalCompositeBlendFunc(ctx: NVGcontext, sfactor: Int, dfactor: Int): Void
+public static function nvgGlobalCompositeBlendFunc(ctx: NVGcontext, sfactor: Int, dfactor: Int): Void
 {
 	nvgGlobalCompositeBlendFuncSeparate(ctx, sfactor, dfactor, sfactor, dfactor);
 }
 
-static function nvgGlobalCompositeBlendFuncSeparate(ctx: NVGcontext, srcRGB: Int, dstRGB: Int, srcAlpha: Int, dstAlpha: Int): Void
+public static function nvgGlobalCompositeBlendFuncSeparate(ctx: NVGcontext, srcRGB: Int, dstRGB: Int, srcAlpha: Int, dstAlpha: Int): Void
 {
 	var op: NVGcompositeOperationState = new NVGcompositeOperationState();
 	op.srcRGB = srcRGB;
@@ -2343,34 +2165,34 @@ static function nvg__expandFill(ctx: NVGcontext, w: Float, lineJoin: Int, miterL
 
 
 // Draw
-static function nvgBeginPath(ctx: NVGcontext): Void
+public static function nvgBeginPath(ctx: NVGcontext): Void
 {
 	ctx.ncommands = 0;
 	nvg__clearPathCache(ctx);
 }
 
-static function nvgMoveTo(ctx: NVGcontext, x: Float, y: Float): Void
+public static function nvgMoveTo(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(3);
 	vals[0] = NVG_MOVETO; vals[1] = x; vals[2] = y;
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgLineTo(ctx: NVGcontext, x: Float, y: Float): Void
+public static function nvgLineTo(ctx: NVGcontext, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(3);
 	vals[0] = NVG_LINETO; vals[1] = x; vals[2] = y;
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgBezierTo(ctx: NVGcontext, c1x: Float, c1y: Float, c2x: Float, c2y: Float, x: Float, y: Float): Void
+public static function nvgBezierTo(ctx: NVGcontext, c1x: Float, c1y: Float, c2x: Float, c2y: Float, x: Float, y: Float): Void
 {
 	var vals = new Vector<Float>(7);
 	vals[0] = NVG_BEZIERTO; vals[1] = c1x; vals[2] = c1y; vals[3] = c2x; vals[4] = c2y; vals[5] = x; vals[6] = y;
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgQuadTo(ctx: NVGcontext, cx: Float, cy: Float, x: Float, y: Float): Void
+public static function nvgQuadTo(ctx: NVGcontext, cx: Float, cy: Float, x: Float, y: Float): Void
 {
     var x0: Float = ctx.commandx;
     var y0: Float = ctx.commandy;
@@ -2382,7 +2204,7 @@ static function nvgQuadTo(ctx: NVGcontext, cx: Float, cy: Float, x: Float, y: Fl
     nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgArcTo(ctx: NVGcontext, x1: Float, y1: Float, x2: Float, y2: Float, radius: Float): Void
+public static function nvgArcTo(ctx: NVGcontext, x1: Float, y1: Float, x2: Float, y2: Float, radius: Float): Void
 {
 	var x0: Float = ctx.commandx;
 	var y0: Float = ctx.commandy;
@@ -2438,21 +2260,21 @@ static function nvgArcTo(ctx: NVGcontext, x1: Float, y1: Float, x2: Float, y2: F
 	nvgArc(ctx, cx, cy, radius, a0, a1, dir);
 }
 
-static function nvgClosePath(ctx: NVGcontext): Void
+public static function nvgClosePath(ctx: NVGcontext): Void
 {
 	var vals = new Vector<Float>(1);
 	vals[0] = NVG_CLOSE;
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgPathWinding(ctx: NVGcontext, dir: Int): Void
+public static function nvgPathWinding(ctx: NVGcontext, dir: Int): Void
 {
 	var vals = new Vector<Float>(2);
 	vals[0] = NVG_WINDING; vals[1] = dir;
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Float, a1: Float, dir: Int)
+public static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Float, a1: Float, dir: Int)
 {
 	var a: Float = 0; var da: Float = 0; var hda: Float = 0; var kappa: Float = 0;
 	var dx: Float = 0; var dy: Float = 0; var x: Float = 0; var y: Float = 0; var tanx: Float = 0; var tany: Float = 0;
@@ -2517,7 +2339,7 @@ static function nvgArc(ctx: NVGcontext, cx: Float, cy: Float, r: Float, a0: Floa
 	nvg__appendCommands(ctx, vals, nvals);
 }
 
-static function nvgRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
+public static function nvgRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float): Void
 {
 	var vals = new Vector<Float>(13);
 	vals[0] = NVG_MOVETO; vals[1] = x; vals[2] = y;
@@ -2528,12 +2350,12 @@ static function nvgRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float)
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgRoundedRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float, r: Float): Void
+public static function nvgRoundedRect(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float, r: Float): Void
 {
 	nvgRoundedRectVarying(ctx, x, y, w, h, r, r, r, r);
 }
 
-static function nvgRoundedRectVarying(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float, radTopLeft: Float, radTopRight: Float, radBottomRight: Float, radBottomLeft: Float): Void
+public static function nvgRoundedRectVarying(ctx: NVGcontext, x: Float, y: Float, w: Float, h: Float, radTopLeft: Float, radTopRight: Float, radBottomRight: Float, radBottomLeft: Float): Void
 {
 	if(radTopLeft < 0.1 && radTopRight < 0.1 && radBottomRight < 0.1 && radBottomLeft < 0.1) {
 		nvgRect(ctx, x, y, w, h);
@@ -2560,7 +2382,7 @@ static function nvgRoundedRectVarying(ctx: NVGcontext, x: Float, y: Float, w: Fl
 	}
 }
 
-static function nvgEllipse(ctx: NVGcontext, cx: Float, cy: Float, rx: Float, ry: Float): Void
+public static function nvgEllipse(ctx: NVGcontext, cx: Float, cy: Float, rx: Float, ry: Float): Void
 {
 	var vals = new Vector<Float>(32);
 	vals[0] = NVG_MOVETO; vals[1] = cx-rx; vals[2] = cy;
@@ -2572,12 +2394,12 @@ static function nvgEllipse(ctx: NVGcontext, cx: Float, cy: Float, rx: Float, ry:
 	nvg__appendCommands(ctx, vals, vals.length);
 }
 
-static function nvgCircle(ctx: NVGcontext, cx: Float, cy: Float, r: Float): Void
+public static function nvgCircle(ctx: NVGcontext, cx: Float, cy: Float, r: Float): Void
 {
 	nvgEllipse(ctx, cx,cy, r,r);
 }
 
-static function nvgDebugDumpPathCache(ctx: NVGcontext): Void
+public static function nvgDebugDumpPathCache(ctx: NVGcontext): Void
 {
 	var path: NVGpath;
 	// int i, j;
@@ -2599,7 +2421,7 @@ static function nvgDebugDumpPathCache(ctx: NVGcontext): Void
 	}
 }
 
-static function nvgFill(ctx: NVGcontext): Void
+public static function nvgFill(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var path: NVGpath;
@@ -2628,7 +2450,7 @@ static function nvgFill(ctx: NVGcontext): Void
 	}
 }
 
-static function nvgStroke(ctx: NVGcontext): Void
+public static function nvgStroke(ctx: NVGcontext): Void
 {
 	var state: NVGstate = nvg__getState(ctx);
 	var scale: Float = nvg__getAverageScale(state.xform);
@@ -3326,6 +3148,12 @@ static function fonsAddFontMem(stash: FONScontext, name: String, data: Array<Int
 static function fonsResetFallbackFont(stash: FONScontext, base: Int): Void {}
 static function fonsValidateTexture(stash: FONScontext, dirty: Vector<Int>): Int { return 0; }
 static function fonsGetTextureData(stash: FONScontext, width: Ref<Int>, height: Ref<Int>): Array<Int> { return null; }
+
+public static function nvgCreateKha(flags: Int): NVGcontext {
+	var context = new NVGcontext();
+	context.params = new NVGKparams();
+	return context;
+}
 }
 
 class FONScontext {}
