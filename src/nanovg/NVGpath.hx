@@ -12,6 +12,8 @@ class NVGpath {
 	public var winding: Int;
 	public var convex: Bool;
 
+	public function new() {}
+
 	public function nullify(): Void {
 		first = 0;
 		count = 0;

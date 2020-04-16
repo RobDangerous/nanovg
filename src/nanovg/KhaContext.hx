@@ -9,6 +9,6 @@ class KhaContext {
 	public var view1: Float;
 
 	public function new() {
-		
+		textures[0] = null;
 	}
 }

@@ -16,13 +16,15 @@ class KhaParams extends NVGparams {
 
 		if (tex == null) return 0;
 
-		var pixels = tex.lock();
-		for (x in 0...w) {
-			for (y in 0...h) {
-				pixels.set(y * h * w * 4 + x * 4, data[y * h * w + x]);
+		if (data != null) {
+			var pixels = tex.lock();
+			for (x in 0...w) {
+				for (y in 0...h) {
+					pixels.set(y * h * w * 4 + x * 4, data[y * h * w + x]);
+				}
 			}
+			tex.unlock();
 		}
-		tex.unlock();
 
 		context.textures.push(tex);
 		return context.textures.length - 1;
@@ -78,12 +80,29 @@ class KhaParams extends NVGparams {
 		context.view1 = width;
 	}
 
-	override public function renderCancel(uptr: Dynamic): Void {}
-	override public function renderFlush(uptr: Dynamic): Void {}
-	override public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {}
-	override public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {}
-	override public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {}
-	override public function renderDelete(uptr: Dynamic): Void {}
+	override public function renderCancel(uptr: Dynamic): Void {
+		trace("renderCancel");
+	}
+
+	override public function renderFlush(uptr: Dynamic): Void {
+		trace("renderFlush");
+	}
+
+	override public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {
+		trace("renderFill");
+	}
+
+	override public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {
+		trace("renderStroke");
+	}
+
+	override public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {
+		trace("renderTriangles");
+	}
+
+	override public function renderDelete(uptr: Dynamic): Void {
+		trace("renderDelete");
+	}
 
 	public function new() {
 		super();

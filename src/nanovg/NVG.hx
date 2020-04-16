@@ -177,15 +177,15 @@ class NVGstate {
 	public function nullify(): Void {
 		compositeOperation = new NVGcompositeOperationState();
 		shapeAntiAlias = 0;
-		fill = null;
-		stroke = null;
+		fill = new NVGpaint();
+		stroke = new NVGpaint();
 		strokeWidth = 0;
 		miterLimit = 0;
 		lineJoin = 0;
 		lineCap = 0;
 		alpha = 0;
 		xform = new Vector<Float>(6);
-		scissor = null;
+		scissor = new NVGscissor();
 		fontSize = 0;
 		letterSpacing = 0;
 		lineHeight = 0;
@@ -224,6 +224,8 @@ class NVGpoint {
 	public var dmx: Float; public var dmy: Float;
 	public var flags: Int;
 
+	public function new() {}
+
 	public function nullify(): Void {
 		x = 0.0;
 		y = 0.0;
@@ -259,7 +261,7 @@ class NVGcontext {
 	public var ccommands: Int;
 	public var ncommands: Int;
 	public var commandx: Float; public var commandy: Float;
-	public var states: Array<NVGstate>;
+	public var states: Vector<NVGstate>;
 	public var nstates: Int;
 	public var cache: NVGpathCache;
 	public var tessTol: Float;
@@ -267,14 +269,20 @@ class NVGcontext {
 	public var fringeWidth: Float;
 	public var devicePxRatio: Float;
 	public var fs: FONScontext;
-	public var fontImages: Array<Int>;
+	public var fontImages: Vector<Int>;
 	public var fontImageIdx: Int;
 	public var drawCallCount: Int;
 	public var fillTriCount: Int;
 	public var strokeTriCount: Int;
 	public var textTriCount: Int;
 
-	public function new() {}
+	public function new() {
+		states = new Vector<NVGstate>(NVG.NVG_MAX_STATES);
+		for (i in 0...states.length) {
+			states[i] = new NVGstate();
+		}
+		fontImages = new Vector<Int>(NVG.NVG_MAX_FONTIMAGES);
+	}
 }
 
 enum abstract NVGcodepointType(Int) from Int to Int {
@@ -299,13 +307,13 @@ static final NVG_PI = 3.14159265358979323846264338327;
 
 static final NVG_INIT_FONTIMAGE_SIZE = 512;
 static final NVG_MAX_FONTIMAGE_SIZE = 2048;
-static final NVG_MAX_FONTIMAGES = 4;
+public static final NVG_MAX_FONTIMAGES = 4;
 
 static final NVG_INIT_COMMANDS_SIZE = 256;
 static final NVG_INIT_POINTS_SIZE = 128;
 static final NVG_INIT_PATHS_SIZE = 16;
 static final NVG_INIT_VERTS_SIZE = 256;
-static final NVG_MAX_STATES = 32;
+public static final NVG_MAX_STATES = 32;
 
 static final NVG_KAPPA90 = 0.5522847493; // Length proportional to radius of a cubic bezier handle for 90deg arcs.
 
@@ -359,16 +367,25 @@ static function nvg__allocPathCache(): NVGpathCache
 
 	c.points = new Pointer<NVGpoint>(new Vector<NVGpoint>(NVG_INIT_POINTS_SIZE));
 	if (c.points == null) return null;
+	for (i in 0...c.points.arr.length) {
+		c.points.arr[i] = new NVGpoint();
+	}
 	c.npoints = 0;
 	c.cpoints = NVG_INIT_POINTS_SIZE;
 
 	c.paths = new Vector<NVGpath>(NVG_INIT_PATHS_SIZE);
 	if (c.paths == null) return null;
+	for (i in 0...c.paths.length) {
+		c.paths[i] = new NVGpath();
+	}
 	c.npaths = 0;
 	c.cpaths = NVG_INIT_PATHS_SIZE;
 
 	c.verts = new Pointer<NVGvertex>(new Vector<NVGvertex>(NVG_INIT_VERTS_SIZE));
 	if (c.verts == null) return null;
+	for (i in 0...c.verts.arr.length) {
+		c.verts.arr[i] = new NVGvertex();
+	}
 	c.nverts = 0;
 	c.cverts = NVG_INIT_VERTS_SIZE;
 
@@ -1338,6 +1355,9 @@ static function nvg__addPath(ctx: NVGcontext): Void
 		var cpaths: Int = ctx.cache.npaths+1 + Std.int(ctx.cache.cpaths/2);
 		paths = new Vector<NVGpath>(cpaths);
 		if (paths == null) return;
+		for (i in 0...paths.length) {
+			paths[i] = new NVGpath();
+		}
 		ctx.cache.paths = paths;
 		ctx.cache.cpaths = cpaths;
 	}
@@ -1375,6 +1395,9 @@ static function nvg__addPoint(ctx: NVGcontext, x: Float, y: Float, flags: Int): 
 		var cpoints: Int = ctx.cache.npoints+1 + Std.int(ctx.cache.cpoints/2);
 		points = new Vector<NVGpoint>(cpoints);
 		if (points == null) return;
+		for (i in 0...points.length) {
+			points[i] = new NVGpoint();
+		}
 		ctx.cache.points = new Pointer<NVGpoint>(points);
 		ctx.cache.cpoints = cpoints;
 	}
@@ -1417,6 +1440,9 @@ static function nvg__allocTempVerts(ctx: NVGcontext, nverts: Int): Pointer<NVGve
 		var cverts: Int = (nverts + 0xff) & ~0xff; // Round up to prevent allocations when things change just slightly.
 		verts = new Vector<NVGvertex>(cverts);
 		if (verts == null) return null;
+		for (i in 0...verts.length) {
+			verts[i] = new NVGvertex();
+		}
 		ctx.cache.verts = new Pointer<NVGvertex>(verts);
 		ctx.cache.cverts = cverts;
 	}
@@ -3140,7 +3166,7 @@ static function fonsResetAtlas(fs: FONScontext, w: Int, h: Int): Void {}
 static function fonsAddFont(fs: FONScontext, name: String, filename: String, value: Int): Int { return 0; }
 static function fonsAddFallbackFont(fs: FONScontext, baseFont: Int, fallbackFont: Int): Int { return 0; }
 static function fonsDeleteInternal(fs: FONScontext): Void {}
-static function fonsCreateInternal(params: FONSparams): FONScontext { return null; }
+static function fonsCreateInternal(params: FONSparams): FONScontext { return new FONScontext(); }
 static function fonsTextBounds(s: FONScontext, x: Float, y: Float, string: StringPointer, end: StringPointer, bounds: Vector<Float>): Float { return 0; }
 static function fonsTextIterInit(stash: FONScontext, iter: FONStextIter, x: Float, y: Float, str: StringPointer, end: StringPointer, bitmapOption: Int): Int { return 0; }
 static function fonsTextIterNext(stash: FONScontext, iter: FONStextIter, quad: FONSquad): Int { return 0; }
@@ -3167,7 +3193,9 @@ public static function nvgCreateKha(flags: Int): NVGcontext {
 }
 }
 
-class FONScontext {}
+class FONScontext {
+	public function new() {}
+}
 class FONSquad {
 	public var x0: Float;
 	public var x1: Float;
