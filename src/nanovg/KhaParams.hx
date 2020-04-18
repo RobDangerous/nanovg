@@ -115,6 +115,9 @@ class KhaParams extends NVGparams {
 			var ccalls: Int = kha__maxi(context.ncalls+1, 128) + Std.int(context.ccalls/2); // 1.5x Overallocate
 			calls = new Vector<KhaCall>(ccalls);
 			if (calls == null) return null;
+			for (i in 0...ccalls) {
+				calls[i] = new KhaCall();
+			}
 			context.calls = calls;
 			context.ccalls = ccalls;
 		}
@@ -324,6 +327,9 @@ class KhaParams extends NVGparams {
 			var cuniforms: Int = kha__maxi(context.nuniforms+n, 128) + Std.int(context.cuniforms/2); // 1.5x Overallocate
 			uniforms = new Vector<KhaFragUniforms>(cuniforms);
 			if (uniforms == null) return -1;
+			for (i in 0...cuniforms) {
+				uniforms[i] = new KhaFragUniforms();
+			}
 			context.uniforms = uniforms;
 			context.cuniforms = cuniforms;
 		}

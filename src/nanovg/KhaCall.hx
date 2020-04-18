@@ -10,6 +10,10 @@ class KhaCall {
 	public var uniformOffset: Int;
 	public var blendFunc: KhaBlend;
 
+	public function new() {
+		blendFunc = new KhaBlend();
+	}
+
 	public function nullify(): Void {
 		type = 0;
 		image = 0;
