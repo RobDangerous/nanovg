@@ -9,4 +9,11 @@ class NVGvertex {
 		u = 0;
 		v = 0;
 	}
+
+	public function copyTo(vert: NVGvertex): Void {
+		vert.x = x;
+		vert.y = y;
+		vert.u = u;
+		vert.v = v;
+	}
 }

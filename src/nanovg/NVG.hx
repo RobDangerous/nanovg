@@ -80,20 +80,6 @@ enum abstract NVGalign(Int) from Int to Int {
 	var NVG_ALIGN_BASELINE	= 1<<6; // Default, align text vertically to baseline.
 }
 
-enum abstract NVGblendFactor(Int) from Int to Int {
-	var NVG_ZERO = 1<<0;
-	var NVG_ONE = 1<<1;
-	var NVG_SRC_COLOR = 1<<2;
-	var NVG_ONE_MINUS_SRC_COLOR = 1<<3;
-	var NVG_DST_COLOR = 1<<4;
-	var NVG_ONE_MINUS_DST_COLOR = 1<<5;
-	var NVG_SRC_ALPHA = 1<<6;
-	var NVG_ONE_MINUS_SRC_ALPHA = 1<<7;
-	var NVG_DST_ALPHA = 1<<8;
-	var NVG_ONE_MINUS_DST_ALPHA = 1<<9;
-	var NVG_SRC_ALPHA_SATURATE = 1<<10;
-}
-
 enum abstract NVGcompositeOperation(Int) from Int to Int {
 	var NVG_SOURCE_OVER;
 	var NVG_SOURCE_IN;
@@ -120,20 +106,6 @@ class NVGtextRow {
 	public var next: StringPointer;	// Pointer to the beginning of the next row.
 	public var width: Float;		// Logical width of the row.
 	public var minx: Float; public var maxx: Float;	// Actual bounds of the row. Logical with and bounds can differ because of kerning and some parts over extending.
-}
-
-enum abstract NVGimageFlags(Int) {
-    var NVG_IMAGE_GENERATE_MIPMAPS	= 1<<0;     // Generate mipmaps during creation of the image.
-	var NVG_IMAGE_REPEATX			= 1<<1;		// Repeat image in X direction.
-	var NVG_IMAGE_REPEATY			= 1<<2;		// Repeat image in Y direction.
-	var NVG_IMAGE_FLIPY				= 1<<3;		// Flips (inverses) image in Y direction when rendered.
-	var NVG_IMAGE_PREMULTIPLIED		= 1<<4;		// Image data has premultiplied alpha.
-	var NVG_IMAGE_NEAREST			= 1<<5;		// Image interpolation is Nearest instead Linear
-}
-
-enum abstract NVGtexture(Int) from Int to Int {
-	var NVG_TEXTURE_ALPHA = 0x01;
-	var NVG_TEXTURE_RGBA = 0x02;
 }
 
 enum abstract NVGcommands(Int) from Int to Int {
@@ -406,63 +378,63 @@ static function nvg__compositeOperationState(op: Int): NVGcompositeOperationStat
 
 	if (op == NVG_SOURCE_OVER)
 	{
-		sfactor = NVG_ONE;
-		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_ONE;
+		dfactor = NVGblendFactor.NVG_ONE_MINUS_SRC_ALPHA;
 	}
 	else if (op == NVG_SOURCE_IN)
 	{
-		sfactor = NVG_DST_ALPHA;
-		dfactor = NVG_ZERO;
+		sfactor = NVGblendFactor.NVG_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_ZERO;
 	}
 	else if (op == NVG_SOURCE_OUT)
 	{
-		sfactor = NVG_ONE_MINUS_DST_ALPHA;
-		dfactor = NVG_ZERO;
+		sfactor = NVGblendFactor.NVG_ONE_MINUS_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_ZERO;
 	}
 	else if (op == NVG_ATOP)
 	{
-		sfactor = NVG_DST_ALPHA;
-		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_ONE_MINUS_SRC_ALPHA;
 	}
 	else if (op == NVG_DESTINATION_OVER)
 	{
-		sfactor = NVG_ONE_MINUS_DST_ALPHA;
-		dfactor = NVG_ONE;
+		sfactor = NVGblendFactor.NVG_ONE_MINUS_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_ONE;
 	}
 	else if (op == NVG_DESTINATION_IN)
 	{
-		sfactor = NVG_ZERO;
-		dfactor = NVG_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_ZERO;
+		dfactor = NVGblendFactor.NVG_SRC_ALPHA;
 	}
 	else if (op == NVG_DESTINATION_OUT)
 	{
-		sfactor = NVG_ZERO;
-		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_ZERO;
+		dfactor = NVGblendFactor.NVG_ONE_MINUS_SRC_ALPHA;
 	}
 	else if (op == NVG_DESTINATION_ATOP)
 	{
-		sfactor = NVG_ONE_MINUS_DST_ALPHA;
-		dfactor = NVG_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_ONE_MINUS_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_SRC_ALPHA;
 	}
 	else if (op == NVG_LIGHTER)
 	{
-		sfactor = NVG_ONE;
-		dfactor = NVG_ONE;
+		sfactor = NVGblendFactor.NVG_ONE;
+		dfactor = NVGblendFactor.NVG_ONE;
 	}
 	else if (op == NVG_COPY)
 	{
-		sfactor = NVG_ONE;
-		dfactor = NVG_ZERO;
+		sfactor = NVGblendFactor.NVG_ONE;
+		dfactor = NVGblendFactor.NVG_ZERO;
 	}
 	else if (op == NVG_XOR)
 	{
-		sfactor = NVG_ONE_MINUS_DST_ALPHA;
-		dfactor = NVG_ONE_MINUS_SRC_ALPHA;
+		sfactor = NVGblendFactor.NVG_ONE_MINUS_DST_ALPHA;
+		dfactor = NVGblendFactor.NVG_ONE_MINUS_SRC_ALPHA;
 	}
 	else
 	{
-		sfactor = NVG_ONE;
-		dfactor = NVG_ZERO;
+		sfactor = NVGblendFactor.NVG_ONE;
+		dfactor = NVGblendFactor.NVG_ZERO;
 	}
 
 	var state : NVGcompositeOperationState = new NVGcompositeOperationState();
@@ -520,7 +492,7 @@ public static function nvgCreateInternal(params: NVGparams): NVGcontext
 	if (ctx.fs == null) return null;
 
 	// Create font texture
-	ctx.fontImages[0] = ctx.params.renderCreateTexture(ctx.params.userPtr, NVG_TEXTURE_ALPHA, fontParams.width, fontParams.height, 0, null);
+	ctx.fontImages[0] = ctx.params.renderCreateTexture(ctx.params.userPtr, NVGtexture.NVG_TEXTURE_ALPHA, fontParams.width, fontParams.height, 0, null);
 	if (ctx.fontImages[0] == 0) return null;
 	ctx.fontImageIdx = 0;
 
@@ -1022,7 +994,7 @@ public static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data:
 
 public static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int
 {
-	return ctx.params.renderCreateTexture(ctx.params.userPtr, NVG_TEXTURE_RGBA, w, h, imageFlags, data);
+	return ctx.params.renderCreateTexture(ctx.params.userPtr, NVGtexture.NVG_TEXTURE_RGBA, w, h, imageFlags, data);
 }
 
 public static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void
@@ -2655,7 +2627,7 @@ static function nvg__allocTextAtlas(ctx: NVGcontext): Bool
 			iw *= 2;
 		if (iw > NVG_MAX_FONTIMAGE_SIZE || ih > NVG_MAX_FONTIMAGE_SIZE)
 			iw = ih = NVG_MAX_FONTIMAGE_SIZE;
-		ctx.fontImages[ctx.fontImageIdx+1] = ctx.params.renderCreateTexture(ctx.params.userPtr, NVG_TEXTURE_ALPHA, iw, ih, 0, null);
+		ctx.fontImages[ctx.fontImageIdx+1] = ctx.params.renderCreateTexture(ctx.params.userPtr, NVGtexture.NVG_TEXTURE_ALPHA, iw, ih, 0, null);
 	}
 	++ctx.fontImageIdx;
 	fonsResetAtlas(ctx.fs, iw, ih);
