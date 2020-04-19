@@ -103,12 +103,13 @@ class KhaContext {
 		g.setMatrix3(scissorMat, new FastMatrix3(
 			frag.scissorMat[0], frag.scissorMat[1], frag.scissorMat[2],
 			frag.scissorMat[3], frag.scissorMat[4], frag.scissorMat[5],
-			frag.scissorMat[6], frag.scissorMat[7], frag.scissorMat[8]));
+			frag.scissorMat[6], frag.scissorMat[7], frag.scissorMat[8])
+		);
 		g.setMatrix3(paintMat, new FastMatrix3(
 			frag.paintMat[0], frag.paintMat[1], frag.paintMat[2],
 			frag.paintMat[3], frag.paintMat[4], frag.paintMat[5],
-			frag.paintMat[6], frag.paintMat[7], frag.paintMat[8]
-		));
+			frag.paintMat[6], frag.paintMat[7], frag.paintMat[8])
+		);
 		g.setFloat4(innerCol, frag.innerCol.r, frag.innerCol.g, frag.innerCol.b, frag.innerCol.a);
 		g.setFloat4(outerCol, frag.outerCol.r, frag.outerCol.g, frag.outerCol.b, frag.outerCol.a);
 		g.setFloat2(scissorExt, frag.scissorExt[0], frag.scissorExt[1]);

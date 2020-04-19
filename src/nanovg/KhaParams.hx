@@ -328,32 +328,25 @@ class KhaParams extends NVGparams {
 			tex = kha__findTexture(context, paint.image);
 			if (tex == null) return 0;
 			if ((tex.flags & NVGimageFlags.NVG_IMAGE_FLIPY) != 0) {
-			var m1 = new Vector<Float>(6);
-			var m2 = new Vector<Float>(6);
-			NVG.nvgTransformTranslate(m1, 0.0, frag.extent[1] * 0.5);
-			NVG.nvgTransformMultiply(m1, paint.xform);
-			NVG.nvgTransformScale(m2, 1.0, -1.0);
-			NVG.nvgTransformMultiply(m2, m1);
-			NVG.nvgTransformTranslate(m1, 0.0, -frag.extent[1] * 0.5);
-			NVG.nvgTransformMultiply(m1, m2);
-			NVG.nvgTransformInverse(invxform, m1);
-		} else {
-			NVG.nvgTransformInverse(invxform, paint.xform);
-		}
-		frag.type = NSVG_SHADER_FILLIMG;
+				var m1 = new Vector<Float>(6);
+				var m2 = new Vector<Float>(6);
+				NVG.nvgTransformTranslate(m1, 0.0, frag.extent[1] * 0.5);
+				NVG.nvgTransformMultiply(m1, paint.xform);
+				NVG.nvgTransformScale(m2, 1.0, -1.0);
+				NVG.nvgTransformMultiply(m2, m1);
+				NVG.nvgTransformTranslate(m1, 0.0, -frag.extent[1] * 0.5);
+				NVG.nvgTransformMultiply(m1, m2);
+				NVG.nvgTransformInverse(invxform, m1);
+			} else {
+				NVG.nvgTransformInverse(invxform, paint.xform);
+			}
+			frag.type = NSVG_SHADER_FILLIMG;
 
-		#if NANOVG_GL_USE_UNIFORMBUFFER
-		if (tex.type == NVGtexture.NVG_TEXTURE_RGBA)
-			frag.texType = (tex.flags & NVGimageFlags.NVG_IMAGE_PREMULTIPLIED != 0) ? 0 : 1;
-		else
-			frag->texType = 2;
-		#else
-		if (tex.type == NVGtexture.NVG_TEXTURE_RGBA)
-			frag.texType = (tex.flags & NVGimageFlags.NVG_IMAGE_PREMULTIPLIED != 0) ? 0 : 1;
-		else
-			frag.texType = 2;
-		#end
-		//		printf("frag->texType = %d\n", frag->texType);
+			if (tex.type == NVGtexture.NVG_TEXTURE_RGBA)
+				frag.texType = (tex.flags & NVGimageFlags.NVG_IMAGE_PREMULTIPLIED != 0) ? 0 : 1;
+			else
+				frag.texType = 2;
+			//		printf("frag->texType = %d\n", frag->texType);
 		} else {
 			frag.type = NSVG_SHADER_FILLGRAD;
 			frag.radius = paint.radius;
