@@ -1,44 +1,25 @@
 #version 450
 
-#ifdef USE_UNIFORMBUFFER
-	layout(std140) uniform frag {
-		mat3 scissorMat;
-		mat3 paintMat;
-		vec4 innerCol;
-		vec4 outerCol;
-		vec2 scissorExt;
-		vec2 scissorScale;
-		vec2 extent;
-		float radius;
-		float feather;
-		float strokeMult;
-		float strokeThr;
-		int texType;
-		int type;
-	};
-#else // NANOVG_GL3 && !USE_UNIFORMBUFFER
-#define UNIFORMARRAY_SIZE 11
-	uniform vec4 frag[UNIFORMARRAY_SIZE];
-#endif
-	uniform sampler2D tex;
-	in vec2 ftcoord;
-	in vec2 fpos;
-	out vec4 outColor;
-#ifndef USE_UNIFORMBUFFER
-	#define scissorMat mat3(frag[0].xyz, frag[1].xyz, frag[2].xyz)
-	#define paintMat mat3(frag[3].xyz, frag[4].xyz, frag[5].xyz)
-	#define innerCol frag[6]
-	#define outerCol frag[7]
-	#define scissorExt frag[8].xy
-	#define scissorScale frag[8].zw
-	#define extent frag[9].xy
-	#define radius frag[9].z
-	#define feather frag[9].w
-	#define strokeMult frag[10].x
-	#define strokeThr frag[10].y
-	#define texType int(frag[10].z)
-	#define type int(frag[10].w)
-#endif
+#define EDGE_AA
+
+uniform sampler2D tex;
+in vec2 ftcoord;
+in vec2 fpos;
+out vec4 outColor;
+
+uniform mat3 scissorMat;
+uniform mat3 paintMat;
+uniform vec4 innerCol;
+uniform vec4 outerCol;
+uniform vec2 scissorExt;
+uniform vec2 scissorScale;
+uniform vec2 extent;
+uniform float radius;
+uniform float feather;
+uniform float strokeMult;
+uniform float strokeThr;
+uniform int texType;
+uniform int type;
 
 float sdroundrect(vec2 pt, vec2 ext, float rad) {
 	vec2 ext2 = ext - vec2(rad,rad);

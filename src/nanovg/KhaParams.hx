@@ -1,5 +1,7 @@
 package nanovg;
 
+import kha.graphics4.IndexBuffer;
+import kha.graphics4.VertexBuffer;
 import kha.graphics4.BlendingFactor;
 import haxe.ds.Vector;
 import kha.Image;
@@ -102,8 +104,126 @@ class KhaParams extends NVGparams {
 		trace("renderCancel");
 	}
 
+	function createVertexBuffer(context: KhaContext): Void {
+		if (context.vertBuf != null) {
+			context.vertBuf.delete();
+			context.stripIndexBuf.delete();
+			context.fanIndexBuf.delete();
+		}
+
+		context.vertBuf = new VertexBuffer(context.nverts, context.structure, DynamicUsage);
+		
+		{
+			context.stripIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
+			var indices = context.stripIndexBuf.lock();
+			for (i in 2...context.nverts) {
+				indices[i * 3 + 0] = i - 2;
+				indices[i * 3 + 1] = i - 1;
+				indices[i * 3 + 2] = i - 0;
+			}
+			context.stripIndexBuf.unlock();
+		}
+
+		{
+			context.fanIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
+			var indices = context.fanIndexBuf.lock();
+			for (i in 2...context.nverts) {
+				indices[i * 3 + 0] = 0;
+				indices[i * 3 + 1] = i - 1;
+				indices[i * 3 + 2] = i - 0;
+			}
+			context.fanIndexBuf.unlock();
+		}
+	}
+
 	override public function renderFlush(uptr: Dynamic): Void {
-		trace("renderFlush");
+		var context: KhaContext = uptr;
+
+		if (context.ncalls > 0) {
+			context.g.setPipeline(context.pipeline);
+
+			if (context.vertBuf == null || context.vertBuf.count() < context.nverts) {
+				createVertexBuffer(context);
+			}
+
+			// Upload vertex data
+			var vertices = context.vertBuf.lock();
+			for (i in 0...context.nverts) {
+				vertices[i * 4 + 0] = context.verts.value(i).x;
+				vertices[i * 4 + 1] = context.verts.value(i).y;
+				vertices[i * 4 + 2] = context.verts.value(i).u;
+				vertices[i * 4 + 3] = context.verts.value(i).v;
+			}
+			context.vertBuf.unlock();
+			context.g.setVertexBuffer(context.vertBuf);
+
+			// Set view and texture just once per frame.
+			context.g.setTexture(context.tex, null);
+			context.g.setFloat2(context.viewSize, context.view0, context.view1);
+
+	#if NANOVG_GL_USE_UNIFORMBUFFER
+			glBindBuffer(GL_UNIFORM_BUFFER, context.fragBuf);
+	#end
+
+			for (i in 0...context.ncalls) {
+				var call: KhaCall = context.calls[i];
+				//kha__blendFuncSeparate(context,call.blendFunc);
+				if (call.type == KHA_FILL) {
+					trace("kha__fill");
+					//kha__fill(context, call);
+				}
+				else if (call.type == KHA_CONVEXFILL) {
+					kha__convexFill(context, call);
+				}
+				else if (call.type == KHA_STROKE) {
+					trace("kha__stroke");
+					//kha__stroke(context, call);
+				}
+				else if (call.type == KHA_TRIANGLES) {
+					trace("kha__triangles");
+					//kha__triangles(context, call);
+				}
+			}
+		}
+
+		// Reset calls
+		context.nverts = 0;
+		context.npaths = 0;
+		context.ncalls = 0;
+		context.nuniforms = 0;
+	}
+
+	static function kha__convexFill(context: KhaContext, call: KhaCall): Void {
+		var paths: Pointer<KhaPath> = context.paths.pointer(call.pathOffset);
+		var npaths: Int = call.pathCount;
+
+		kha__setUniforms(context, call.uniformOffset, call.image);
+		//kha__checkError(gl, "convex fill");
+
+		for (i in 0...npaths) {
+			context.g.setIndexBuffer(context.fanIndexBuf);
+			context.g.drawIndexedVertices(paths.value(i).fillOffset, paths.value(i).fillCount);
+			// Draw fringes
+			if (paths.value(i).strokeCount > 0) {
+				context.g.setIndexBuffer(context.stripIndexBuf);
+				context.g.drawIndexedVertices(paths.value(i).strokeOffset, paths.value(i).strokeCount);
+			}
+		}
+	}
+
+	static function kha__setUniforms(context: KhaContext, uniformOffset: Int, image: Int): Void {
+		var tex: KhaTexture = null;
+		var frag: KhaFragUniforms = kha__fragUniformPtr(context, uniformOffset);
+		context.setConstants(frag);
+
+		if (image != 0) {
+			tex = kha__findTexture(context, image);
+		}
+		// If no image is set, use empty texture
+		if (tex == null) {
+			//tex = kha__findTexture(context, context.dummyTex);
+		}
+		context.g.setTexture(context.tex, tex != null ? tex.image : null);
 	}
 
 	static function kha__maxi(a: Int, b: Int): Int { return a > b ? a : b; }
@@ -250,10 +370,13 @@ class KhaParams extends NVGparams {
 	{
 		var ret: Int = 0;
 		if (context.npaths+n > context.cpaths) {
-			var paths: Vector<KhaPath>;
+			var paths: Pointer<KhaPath>;
 			var cpaths: Int = kha__maxi(context.npaths + n, 128) + Std.int(context.cpaths/2); // 1.5x Overallocate
-			paths = new Vector<KhaPath>(cpaths);
+			paths = new Pointer<KhaPath>(new Vector<KhaPath>(cpaths));
 			if (paths == null) return -1;
+			for (i in 0...cpaths) {
+				paths.setValue(i, new KhaPath());
+			}
 			context.paths = paths;
 			context.cpaths = cpaths;
 		}
@@ -312,6 +435,9 @@ class KhaParams extends NVGparams {
 			var cverts: Int = kha__maxi(context.nverts + n, 4096) + Std.int(context.cverts/2); // 1.5x Overallocate
 			verts = new Pointer<NVGvertex>(new Vector<NVGvertex>(cverts));
 			if (verts == null) return -1;
+			for (i in 0...cverts) {
+				verts.setValue(i, new NVGvertex());
+			}
 			context.verts = verts;
 			context.cverts = cverts;
 		}
@@ -377,7 +503,7 @@ class KhaParams extends NVGparams {
 		}
 
 		for (i in 0...npaths) {
-			var copy: KhaPath = context.paths[call.pathOffset + i];
+			var copy: KhaPath = context.paths.value(call.pathOffset + i);
 			var path: NVGpath = paths[i];
 			path.nullify();
 			if (path.nfill > 0) {

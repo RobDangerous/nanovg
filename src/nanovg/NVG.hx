@@ -437,7 +437,7 @@ static function nvg__compositeOperationState(op: Int): NVGcompositeOperationStat
 		dfactor = NVGblendFactor.NVG_ZERO;
 	}
 
-	var state : NVGcompositeOperationState = new NVGcompositeOperationState();
+	var state: NVGcompositeOperationState = new NVGcompositeOperationState();
 	state.srcRGB = sfactor;
 	state.dstRGB = dfactor;
 	state.srcAlpha = sfactor;
