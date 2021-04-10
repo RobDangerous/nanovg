@@ -1300,23 +1300,18 @@ class NVG {
 				case NVG_MOVETO:
 					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
 					i += 3;
-					break;
 				case NVG_LINETO:
 					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
 					i += 3;
-					break;
 				case NVG_BEZIERTO:
 					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
 					nvgTransformPoint(new Ref<Float>(vals[i + 3]), new Ref<Float>(vals[i + 4]), state.xform, vals[i + 3], vals[i + 4]);
 					nvgTransformPoint(new Ref<Float>(vals[i + 5]), new Ref<Float>(vals[i + 6]), state.xform, vals[i + 5], vals[i + 6]);
 					i += 7;
-					break;
 				case NVG_CLOSE:
 					i++;
-					break;
 				case NVG_WINDING:
 					i += 2;
-					break;
 				default:
 					i++;
 			}
@@ -1565,12 +1560,10 @@ class NVG {
 					p = ctx.commands.pointer(i + 1);
 					nvg__addPoint(ctx, p.value(0), p.value(1), NVG_PT_CORNER);
 					i += 3;
-					break;
 				case NVG_LINETO:
 					p = ctx.commands.pointer(i + 1);
 					nvg__addPoint(ctx, p.value(0), p.value(1), NVG_PT_CORNER);
 					i += 3;
-					break;
 				case NVG_BEZIERTO:
 					last = nvg__lastPoint(ctx);
 					if (last != null) {
@@ -1581,15 +1574,12 @@ class NVG {
 							NVG_PT_CORNER);
 					}
 					i += 7;
-					break;
 				case NVG_CLOSE:
 					nvg__closePath(ctx);
 					i++;
-					break;
 				case NVG_WINDING:
 					nvg__pathWinding(ctx, Std.int(ctx.commands.value(i + 1)));
 					i += 2;
-					break;
 				default:
 					i++;
 			}
@@ -3070,16 +3060,12 @@ class NVG {
 				case 32: // space
 				case 0x00a0: // NBSP
 					type = NVG_SPACE;
-					break;
 				case 10: // \n
 					type = pcodepoint == 13 ? NVG_SPACE : NVG_NEWLINE;
-					break;
 				case 13: // \r
 					type = pcodepoint == 10 ? NVG_SPACE : NVG_NEWLINE;
-					break;
 				case 0x0085: // NEL
 					type = NVG_NEWLINE;
-					break;
 				default:
 					if ((iter.codepoint >= 0x4E00 && iter.codepoint <= 0x9FFF)
 						|| (iter.codepoint >= 0x3000 && iter.codepoint <= 0x30FF)
@@ -3090,7 +3076,6 @@ class NVG {
 						type = NVG_CJK_CHAR;
 					else
 						type = NVG_CHAR;
-					break;
 			}
 
 			if (type == NVG_NEWLINE) {
