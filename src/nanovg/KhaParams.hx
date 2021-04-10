@@ -34,7 +34,8 @@ class KhaParams extends NVGparams {
 		tex.id = context.textures.length;
 		tex.image = Image.create(w, h);
 
-		if (tex == null) return 0;
+		if (tex == null)
+			return 0;
 
 		if (data != null) {
 			var pixels = tex.image.lock();
@@ -93,7 +94,7 @@ class KhaParams extends NVGparams {
 
 		return 0;
 	}
-	
+
 	override public function renderViewport(uptr: Dynamic, width: Float, height: Float, devicePixelRatio: Float): Void {
 		var context: KhaContext = uptr;
 		context.view0 = width;
@@ -112,7 +113,7 @@ class KhaParams extends NVGparams {
 		}
 
 		context.vertBuf = new VertexBuffer(context.nverts, context.structure, DynamicUsage);
-		
+
 		{
 			context.stripIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
 			var indices = context.stripIndexBuf.lock();
@@ -161,27 +162,23 @@ class KhaParams extends NVGparams {
 			context.g.setTexture(context.tex, null);
 			context.g.setFloat2(context.viewSize, context.view0, context.view1);
 
-	#if NANOVG_GL_USE_UNIFORMBUFFER
-			glBindBuffer(GL_UNIFORM_BUFFER, context.fragBuf);
-	#end
-
 			for (i in 0...context.ncalls) {
 				var call: KhaCall = context.calls[i];
-				//kha__blendFuncSeparate(context,call.blendFunc);
+				// kha__blendFuncSeparate(context,call.blendFunc);
 				if (call.type == KHA_FILL) {
 					trace("kha__fill");
-					//kha__fill(context, call);
+					// kha__fill(context, call);
 				}
 				else if (call.type == KHA_CONVEXFILL) {
 					kha__convexFill(context, call);
 				}
 				else if (call.type == KHA_STROKE) {
 					trace("kha__stroke");
-					//kha__stroke(context, call);
+					// kha__stroke(context, call);
 				}
 				else if (call.type == KHA_TRIANGLES) {
 					trace("kha__triangles");
-					//kha__triangles(context, call);
+					// kha__triangles(context, call);
 				}
 			}
 		}
@@ -198,7 +195,7 @@ class KhaParams extends NVGparams {
 		var npaths: Int = call.pathCount;
 
 		kha__setUniforms(context, call.uniformOffset, call.image);
-		//kha__checkError(gl, "convex fill");
+		// kha__checkError(gl, "convex fill");
 
 		for (i in 0...npaths) {
 			context.g.setIndexBuffer(context.fanIndexBuf);
@@ -221,20 +218,23 @@ class KhaParams extends NVGparams {
 		}
 		// If no image is set, use empty texture
 		if (tex == null) {
-			//tex = kha__findTexture(context, context.dummyTex);
+			// tex = kha__findTexture(context, context.dummyTex);
 		}
 		context.g.setTexture(context.tex, tex != null ? tex.image : null);
 	}
 
-	static function kha__maxi(a: Int, b: Int): Int { return a > b ? a : b; }
+	static function kha__maxi(a: Int, b: Int): Int {
+		return a > b ? a : b;
+	}
 
 	static function kha__allocCall(context: KhaContext): KhaCall {
 		var ret: KhaCall = null;
-		if (context.ncalls+1 > context.ccalls) {
+		if (context.ncalls + 1 > context.ccalls) {
 			var calls: Vector<KhaCall>;
-			var ccalls: Int = kha__maxi(context.ncalls+1, 128) + Std.int(context.ccalls/2); // 1.5x Overallocate
+			var ccalls: Int = kha__maxi(context.ncalls + 1, 128) + Std.int(context.ccalls / 2); // 1.5x Overallocate
 			calls = new Vector<KhaCall>(ccalls);
-			if (calls == null) return null;
+			if (calls == null)
+				return null;
 			for (i in 0...ccalls) {
 				calls[i] = new KhaCall();
 			}
@@ -292,7 +292,8 @@ class KhaParams extends NVGparams {
 		return null;
 	}
 
-	static function kha__convertPaint(context: KhaContext, frag: KhaFragUniforms, paint: NVGpaint, scissor: NVGscissor, width: Float, fringe: Float, strokeThr: Float): Int {
+	static function kha__convertPaint(context: KhaContext, frag: KhaFragUniforms, paint: NVGpaint, scissor: NVGscissor, width: Float, fringe: Float,
+			strokeThr: Float): Int {
 		var tex: KhaTexture = null;
 		var invxform = new Vector<Float>(6);
 
@@ -309,24 +310,26 @@ class KhaParams extends NVGparams {
 			frag.scissorExt[1] = 1.0;
 			frag.scissorScale[0] = 1.0;
 			frag.scissorScale[1] = 1.0;
-		} else {
+		}
+		else {
 			NVG.nvgTransformInverse(invxform, scissor.xform);
 			kha__xformToMat3x4(frag.scissorMat, invxform);
 			frag.scissorExt[0] = scissor.extent[0];
 			frag.scissorExt[1] = scissor.extent[1];
-			frag.scissorScale[0] = NVG.nvg__sqrtf(scissor.xform[0]*scissor.xform[0] + scissor.xform[2]*scissor.xform[2]) / fringe;
-			frag.scissorScale[1] = NVG.nvg__sqrtf(scissor.xform[1]*scissor.xform[1] + scissor.xform[3]*scissor.xform[3]) / fringe;
+			frag.scissorScale[0] = NVG.nvg__sqrtf(scissor.xform[0] * scissor.xform[0] + scissor.xform[2] * scissor.xform[2]) / fringe;
+			frag.scissorScale[1] = NVG.nvg__sqrtf(scissor.xform[1] * scissor.xform[1] + scissor.xform[3] * scissor.xform[3]) / fringe;
 		}
 
 		for (i in 0...paint.extent.length) {
 			frag.extent[i] = paint.extent[i];
 		}
-		frag.strokeMult = (width*0.5 + fringe*0.5) / fringe;
+		frag.strokeMult = (width * 0.5 + fringe * 0.5) / fringe;
 		frag.strokeThr = strokeThr;
 
 		if (paint.image != 0) {
 			tex = kha__findTexture(context, paint.image);
-			if (tex == null) return 0;
+			if (tex == null)
+				return 0;
 			if ((tex.flags & NVGimageFlags.NVG_IMAGE_FLIPY) != 0) {
 				var m1 = new Vector<Float>(6);
 				var m2 = new Vector<Float>(6);
@@ -337,7 +340,8 @@ class KhaParams extends NVGparams {
 				NVG.nvgTransformTranslate(m1, 0.0, -frag.extent[1] * 0.5);
 				NVG.nvgTransformMultiply(m1, m2);
 				NVG.nvgTransformInverse(invxform, m1);
-			} else {
+			}
+			else {
 				NVG.nvgTransformInverse(invxform, paint.xform);
 			}
 			frag.type = NSVG_SHADER_FILLIMG;
@@ -347,7 +351,8 @@ class KhaParams extends NVGparams {
 			else
 				frag.texType = 2;
 			//		printf("frag->texType = %d\n", frag->texType);
-		} else {
+		}
+		else {
 			frag.type = NSVG_SHADER_FILLGRAD;
 			frag.radius = paint.radius;
 			frag.feather = paint.feather;
@@ -359,14 +364,14 @@ class KhaParams extends NVGparams {
 		return 1;
 	}
 
-	static function kha__allocPaths(context: KhaContext, n: Int): Int
-	{
+	static function kha__allocPaths(context: KhaContext, n: Int): Int {
 		var ret: Int = 0;
-		if (context.npaths+n > context.cpaths) {
+		if (context.npaths + n > context.cpaths) {
 			var paths: Pointer<KhaPath>;
-			var cpaths: Int = kha__maxi(context.npaths + n, 128) + Std.int(context.cpaths/2); // 1.5x Overallocate
+			var cpaths: Int = kha__maxi(context.npaths + n, 128) + Std.int(context.cpaths / 2); // 1.5x Overallocate
 			paths = new Pointer<KhaPath>(new Vector<KhaPath>(cpaths));
-			if (paths == null) return -1;
+			if (paths == null)
+				return -1;
 			for (i in 0...cpaths) {
 				paths.setValue(i, new KhaPath());
 			}
@@ -399,9 +404,9 @@ class KhaParams extends NVGparams {
 			return DestinationAlpha;
 		if (factor == NVGblendFactor.NVG_ONE_MINUS_DST_ALPHA)
 			return InverseDestinationAlpha;
-		//if (factor == NVG_SRC_ALPHA_SATURATE)
+		// if (factor == NVG_SRC_ALPHA_SATURATE)
 		//	return GL_SRC_ALPHA_SATURATE;
-		//return GL_INVALID_ENUM;
+		// return GL_INVALID_ENUM;
 		throw "Unsupported blend mode";
 	}
 
@@ -412,22 +417,23 @@ class KhaParams extends NVGparams {
 		blend.srcAlpha = kha_convertBlendFuncFactor(op.srcAlpha);
 		blend.dstAlpha = kha_convertBlendFuncFactor(op.dstAlpha);
 		/*if (blend.srcRGB == GL_INVALID_ENUM || blend.dstRGB == GL_INVALID_ENUM || blend.srcAlpha == GL_INVALID_ENUM || blend.dstAlpha == GL_INVALID_ENUM)
-		{
-			blend.srcRGB = GL_ONE;
-			blend.dstRGB = GL_ONE_MINUS_SRC_ALPHA;
-			blend.srcAlpha = GL_ONE;
-			blend.dstAlpha = GL_ONE_MINUS_SRC_ALPHA;
+			{
+				blend.srcRGB = GL_ONE;
+				blend.dstRGB = GL_ONE_MINUS_SRC_ALPHA;
+				blend.srcAlpha = GL_ONE;
+				blend.dstAlpha = GL_ONE_MINUS_SRC_ALPHA;
 		}*/
 		return blend;
 	}
 
 	static function kha__allocVerts(context: KhaContext, n: Int): Int {
 		var ret: Int = 0;
-		if (context.nverts+n > context.cverts) {
+		if (context.nverts + n > context.cverts) {
 			var verts: Pointer<NVGvertex>;
-			var cverts: Int = kha__maxi(context.nverts + n, 4096) + Std.int(context.cverts/2); // 1.5x Overallocate
+			var cverts: Int = kha__maxi(context.nverts + n, 4096) + Std.int(context.cverts / 2); // 1.5x Overallocate
 			verts = new Pointer<NVGvertex>(new Vector<NVGvertex>(cverts));
-			if (verts == null) return -1;
+			if (verts == null)
+				return -1;
 			for (i in 0...cverts) {
 				verts.setValue(i, new NVGvertex());
 			}
@@ -440,12 +446,14 @@ class KhaParams extends NVGparams {
 	}
 
 	static function kha__allocFragUniforms(context: KhaContext, n: Int): Int {
-		var ret: Int = 0; var structSize: Int = context.fragSize;
-		if (context.nuniforms+n > context.cuniforms) {
+		var ret: Int = 0;
+		var structSize: Int = context.fragSize;
+		if (context.nuniforms + n > context.cuniforms) {
 			var uniforms: Vector<KhaFragUniforms>;
-			var cuniforms: Int = kha__maxi(context.nuniforms+n, 128) + Std.int(context.cuniforms/2); // 1.5x Overallocate
+			var cuniforms: Int = kha__maxi(context.nuniforms + n, 128) + Std.int(context.cuniforms / 2); // 1.5x Overallocate
 			uniforms = new Vector<KhaFragUniforms>(cuniforms);
-			if (uniforms == null) return -1;
+			if (uniforms == null)
+				return -1;
 			for (i in 0...cuniforms) {
 				uniforms[i] = new KhaFragUniforms();
 			}
@@ -461,37 +469,41 @@ class KhaParams extends NVGparams {
 		return context.uniforms[i];
 	}
 
-	override public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {
+	override public function renderFill(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float,
+			bounds: Vector<Float>, paths: Vector<NVGpath>, npaths: Int): Void {
 		var context: KhaContext = uptr;
 		var call: KhaCall = kha__allocCall(context);
 		var quad: Pointer<NVGvertex>;
 		var frag: KhaFragUniforms;
-		var maxverts: Int; var offset: Int;
+		var maxverts: Int;
+		var offset: Int;
 
-		if (call == null) return;
+		if (call == null)
+			return;
 
 		call.type = KHA_FILL;
 		call.triangleCount = 4;
 		call.pathOffset = kha__allocPaths(context, npaths);
 		if (call.pathOffset == -1) {
-			if (context.ncalls > 0) context.ncalls--;
+			if (context.ncalls > 0)
+				context.ncalls--;
 			return;
 		}
 		call.pathCount = npaths;
 		call.image = paint.image;
 		call.blendFunc = kha__blendCompositeOperation(compositeOperation);
 
-		if (npaths == 1 && paths[0].convex)
-		{
+		if (npaths == 1 && paths[0].convex) {
 			call.type = KHA_CONVEXFILL;
-			call.triangleCount = 0;	// Bounding box fill quad not needed for convex fill
+			call.triangleCount = 0; // Bounding box fill quad not needed for convex fill
 		}
 
 		// Allocate vertices for all the paths.
 		maxverts = kha__maxVertCount(paths, npaths) + call.triangleCount;
 		offset = kha__allocVerts(context, maxverts);
 		if (offset == -1) {
-			if (context.ncalls > 0) context.ncalls--;
+			if (context.ncalls > 0)
+				context.ncalls--;
 			return;
 		}
 
@@ -529,7 +541,8 @@ class KhaParams extends NVGparams {
 
 			call.uniformOffset = kha__allocFragUniforms(context, 2);
 			if (call.uniformOffset == -1) {
-				if (context.ncalls > 0) context.ncalls--;
+				if (context.ncalls > 0)
+					context.ncalls--;
 				return;
 			}
 			// Simple shader for stencil
@@ -539,10 +552,12 @@ class KhaParams extends NVGparams {
 			frag.type = NSVG_SHADER_SIMPLE;
 			// Fill shader
 			kha__convertPaint(context, kha__fragUniformPtr(context, call.uniformOffset + context.fragSize), paint, scissor, fringe, fringe, -1.0);
-		} else {
+		}
+		else {
 			call.uniformOffset = kha__allocFragUniforms(context, 1);
 			if (call.uniformOffset == -1) {
-				if (context.ncalls > 0) context.ncalls--;
+				if (context.ncalls > 0)
+					context.ncalls--;
 				return;
 			}
 			// Fill shader
@@ -552,11 +567,13 @@ class KhaParams extends NVGparams {
 		return;
 	}
 
-	override public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float, strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {
+	override public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float,
+			strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {
 		trace("renderStroke");
 	}
 
-	override public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {
+	override public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor,
+			verts: Pointer<NVGvertex>, nverts: Int, fringe: Float): Void {
 		trace("renderTriangles");
 	}
 

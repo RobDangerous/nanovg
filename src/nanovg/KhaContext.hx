@@ -16,6 +16,7 @@ class KhaContext {
 	public var structure: VertexStructure;
 	public var tex: TextureUnit;
 	public var viewSize: ConstantLocation;
+
 	var scissorMat: ConstantLocation;
 	var paintMat: ConstantLocation;
 	var innerCol: ConstantLocation;
@@ -57,7 +58,7 @@ class KhaContext {
 	public var nuniforms: Int;
 
 	public var g: Graphics;
-	
+
 	public function new() {
 		pipeline = new PipelineState();
 		pipeline.fragmentShader = Shaders.fill_frag;
@@ -100,20 +101,16 @@ class KhaContext {
 	}
 
 	public function setConstants(frag: KhaFragUniforms): Void {
-		g.setMatrix3(scissorMat, new FastMatrix3(
-			frag.scissorMat[0], frag.scissorMat[1], frag.scissorMat[2],
-			frag.scissorMat[3], frag.scissorMat[4], frag.scissorMat[5],
-			frag.scissorMat[6], frag.scissorMat[7], frag.scissorMat[8])
-		);
-		g.setMatrix3(paintMat, new FastMatrix3(
-			frag.paintMat[0], frag.paintMat[1], frag.paintMat[2],
-			frag.paintMat[3], frag.paintMat[4], frag.paintMat[5],
-			frag.paintMat[6], frag.paintMat[7], frag.paintMat[8])
-		);
+		g.setMatrix3(scissorMat,
+			new FastMatrix3(frag.scissorMat[0], frag.scissorMat[1], frag.scissorMat[2], frag.scissorMat[3], frag.scissorMat[4], frag.scissorMat[5],
+				frag.scissorMat[6], frag.scissorMat[7], frag.scissorMat[8]));
+		g.setMatrix3(paintMat,
+			new FastMatrix3(frag.paintMat[0], frag.paintMat[1], frag.paintMat[2], frag.paintMat[3], frag.paintMat[4], frag.paintMat[5], frag.paintMat[6],
+				frag.paintMat[7], frag.paintMat[8]));
 		g.setFloat4(innerCol, frag.innerCol.r, frag.innerCol.g, frag.innerCol.b, frag.innerCol.a);
 		g.setFloat4(outerCol, frag.outerCol.r, frag.outerCol.g, frag.outerCol.b, frag.outerCol.a);
 		g.setFloat2(scissorExt, frag.scissorExt[0], frag.scissorExt[1]);
-		g.setFloat2(scissorScale, frag.scissorScale[0], frag.scissorScale[1]);		
+		g.setFloat2(scissorScale, frag.scissorScale[0], frag.scissorScale[1]);
 		g.setFloat2(extent, frag.extent[0], frag.extent[1]);
 		g.setFloat(radius, frag.radius);
 		g.setFloat(feather, frag.feather);

@@ -4,6 +4,7 @@ import haxe.ds.Vector;
 
 class Pointer<T> {
 	public var arr: Vector<T>;
+
 	var index: Int;
 
 	public function new(arr: Vector<T>, index: Int = 0) {
