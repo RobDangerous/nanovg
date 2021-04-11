@@ -2791,7 +2791,7 @@ class NVG {
 	static function nvg__flushTextTexture(ctx: NVGcontext): Void {
 		var dirty = new Vector<Int>(4);
 
-		if (fonsValidateTexture(ctx.fs, dirty) != null) {
+		if (fonsValidateTexture(ctx.fs, dirty) != 0) {
 			var fontImage: Int = ctx.fontImages[ctx.fontImageIdx];
 			// Update texture
 			if (fontImage != 0) {
