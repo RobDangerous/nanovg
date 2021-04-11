@@ -118,9 +118,9 @@ class KhaParams extends NVGparams {
 			context.stripIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
 			var indices = context.stripIndexBuf.lock();
 			for (i in 2...context.nverts) {
-				indices[i * 3 + 0] = i - 2;
-				indices[i * 3 + 1] = i - 1;
-				indices[i * 3 + 2] = i - 0;
+				indices[(i - 2) * 3 + 0] = i - 2;
+				indices[(i - 2) * 3 + 1] = i - 1;
+				indices[(i - 2) * 3 + 2] = i - 0;
 			}
 			context.stripIndexBuf.unlock();
 		}
@@ -129,9 +129,9 @@ class KhaParams extends NVGparams {
 			context.fanIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
 			var indices = context.fanIndexBuf.lock();
 			for (i in 2...context.nverts) {
-				indices[i * 3 + 0] = 0;
-				indices[i * 3 + 1] = i - 1;
-				indices[i * 3 + 2] = i - 0;
+				indices[(i - 2) * 3 + 0] = 0;
+				indices[(i - 2) * 3 + 1] = i - 1;
+				indices[(i - 2) * 3 + 2] = i - 0;
 			}
 			context.fanIndexBuf.unlock();
 		}
