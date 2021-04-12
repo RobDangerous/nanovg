@@ -1,6 +1,6 @@
 #version 450
 
-#define EDGE_AA
+#define EDGE_AA 1
 
 uniform sampler2D tex;
 in vec2 ftcoord;

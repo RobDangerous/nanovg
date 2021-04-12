@@ -80,14 +80,11 @@ class KhaContext {
 		pipeline.compile();
 
 		pipelineFill0 = createPipeline();
-		pipelineFill0.stencilFrontWriteMask = 0xff;
-		pipelineFill0.stencilBackWriteMask = 0xff;
+		pipelineFill0.stencilWriteMask = 0xff;
 		pipelineFill0.stencilFrontMode = Always;
 		pipelineFill0.stencilBackMode = Always;
-		pipelineFill0.stencilFrontReferenceValue = Static(0);
-		pipelineFill0.stencilBackReferenceValue = Static(0);
-		pipelineFill0.stencilFrontReadMask = 0xff;
-		pipelineFill0.stencilBackReadMask = 0xff;
+		pipelineFill0.stencilReferenceValue = Static(0);
+		pipelineFill0.stencilReadMask = 0xff;
 		pipelineFill0.stencilFrontFail = Keep;
 		pipelineFill0.stencilFrontDepthFail = Keep;
 		pipelineFill0.stencilFrontBothPass = IncrementWrap;
@@ -101,14 +98,11 @@ class KhaContext {
 		pipelineFill0.compile();
 
 		pipelineFill1 = createPipeline();
-		pipelineFill1.stencilFrontWriteMask = 0xff;
-		pipelineFill1.stencilBackWriteMask = 0xff;
+		pipelineFill1.stencilWriteMask = 0xff;
 		pipelineFill1.stencilFrontMode = Equal;
 		pipelineFill1.stencilBackMode = Equal;
-		pipelineFill1.stencilFrontReferenceValue = Static(0);
-		pipelineFill1.stencilBackReferenceValue = Static(0);
-		pipelineFill1.stencilFrontReadMask = 0xff;
-		pipelineFill1.stencilBackReadMask = 0xff;
+		pipelineFill1.stencilReferenceValue = Static(0);
+		pipelineFill1.stencilReadMask = 0xff;
 		pipelineFill1.stencilFrontFail = Keep;
 		pipelineFill1.stencilFrontDepthFail = Keep;
 		pipelineFill1.stencilFrontBothPass = Keep;
@@ -122,14 +116,11 @@ class KhaContext {
 		pipelineFill1.compile();
 
 		pipelineFill2 = createPipeline();
-		pipelineFill2.stencilFrontWriteMask = 0xff;
-		pipelineFill2.stencilBackWriteMask = 0xff;
+		pipelineFill2.stencilWriteMask = 0xff;
 		pipelineFill2.stencilFrontMode = NotEqual;
 		pipelineFill2.stencilBackMode = NotEqual;
-		pipelineFill2.stencilFrontReferenceValue = Static(0);
-		pipelineFill2.stencilBackReferenceValue = Static(0);
-		pipelineFill2.stencilFrontReadMask = 0xff;
-		pipelineFill2.stencilBackReadMask = 0xff;
+		pipelineFill2.stencilReferenceValue = Static(0);
+		pipelineFill2.stencilReadMask = 0xff;
 		pipelineFill2.stencilFrontFail = Zero;
 		pipelineFill2.stencilFrontDepthFail = Zero;
 		pipelineFill2.stencilFrontBothPass = Zero;
@@ -180,16 +171,13 @@ class KhaContext {
 		pipeline.stencilFrontBothPass = Keep;
 		pipeline.stencilFrontDepthFail = Keep;
 		pipeline.stencilFrontFail = Keep;
-		pipeline.stencilFrontReferenceValue = Static(0);
-		pipeline.stencilFrontReadMask = 0xffffffff;
-		pipeline.stencilFrontWriteMask = 0xffffffff;
 		pipeline.stencilBackMode = Always;
 		pipeline.stencilBackBothPass = Keep;
 		pipeline.stencilBackDepthFail = Keep;
 		pipeline.stencilBackFail = Keep;
-		pipeline.stencilBackReferenceValue = Static(0);
-		pipeline.stencilBackReadMask = 0xffffffff;
-		pipeline.stencilBackWriteMask = 0xffffffff;
+		pipeline.stencilReferenceValue = Static(0);
+		pipeline.stencilReadMask = 0xffffffff;
+		pipeline.stencilWriteMask = 0xffffffff;
 		pipeline.blendSource = BlendOne;
 		pipeline.blendDestination = InverseSourceAlpha;
 		pipeline.alphaBlendSource = BlendOne;
