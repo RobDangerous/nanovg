@@ -54,7 +54,7 @@ enum abstract NVGwinding(Int) from Int to Int {
 	var NVG_CW = 2; // Winding for holes
 }
 
-enum abstract NVGsolidity(Int) {
+enum abstract NVGsolidity(Int) from Int to Int {
 	var NVG_SOLID = 1; // CCW
 	var NVG_HOLE = 2; // CW
 }

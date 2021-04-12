@@ -141,8 +141,6 @@ class KhaParams extends NVGparams {
 		var context: KhaContext = uptr;
 
 		if (context.ncalls > 0) {
-			context.g.setPipeline(context.pipeline);
-
 			if (context.vertBuf == null || context.vertBuf.count() < context.nverts) {
 				createVertexBuffer(context);
 			}
@@ -158,16 +156,11 @@ class KhaParams extends NVGparams {
 			context.vertBuf.unlock();
 			context.g.setVertexBuffer(context.vertBuf);
 
-			// Set view and texture just once per frame.
-			context.g.setTexture(context.tex, null);
-			context.g.setFloat2(context.viewSize, context.view0, context.view1);
-
 			for (i in 0...context.ncalls) {
 				var call: KhaCall = context.calls[i];
 				// kha__blendFuncSeparate(context,call.blendFunc);
 				if (call.type == KHA_FILL) {
-					trace("kha__fill");
-					// kha__fill(context, call);
+					kha__fill(context, call);
 				}
 				else if (call.type == KHA_CONVEXFILL) {
 					kha__convexFill(context, call);
@@ -204,7 +197,8 @@ class KhaParams extends NVGparams {
 		var paths: Pointer<KhaPath> = context.paths.pointer(call.pathOffset);
 		var npaths: Int = call.pathCount;
 
-		kha__setUniforms(context, call.uniformOffset, call.image);
+		context.g.setPipeline(context.pipeline);
+		kha__setUniforms(context, context.uniformsBase, call.uniformOffset, call.image);
 		// kha__checkError(gl, "convex fill");
 
 		for (i in 0...npaths) {
@@ -216,10 +210,12 @@ class KhaParams extends NVGparams {
 		}
 	}
 
-	static function kha__setUniforms(context: KhaContext, uniformOffset: Int, image: Int): Void {
+	static function kha__setUniforms(context: KhaContext, uniforms: KhaContext.Uniforms, uniformOffset: Int, image: Int): Void {
+		context.g.setFloat2(uniforms.viewSize, context.view0, context.view1);
+
 		var tex: KhaTexture = null;
 		var frag: KhaFragUniforms = kha__fragUniformPtr(context, uniformOffset);
-		context.setConstants(frag);
+		context.setConstants(uniforms, frag);
 
 		if (image != 0) {
 			tex = kha__findTexture(context, image);
@@ -228,7 +224,42 @@ class KhaParams extends NVGparams {
 		if (tex == null) {
 			// tex = kha__findTexture(context, context.dummyTex);
 		}
-		context.g.setTexture(context.tex, tex != null ? tex.image : null);
+		context.g.setTexture(uniforms.tex, tex != null ? tex.image : null);
+	}
+
+	static function kha__fill(context: KhaContext, call: KhaCall): Void {
+		var paths: Pointer<KhaPath> = context.paths.pointer(call.pathOffset);
+		var i: Int;
+		var npaths: Int = call.pathCount;
+
+		// Draw shapes
+		context.g.setPipeline(context.pipelineFill0);
+
+		// set bindpoint for solid loc
+		kha__setUniforms(context, context.uniformsFill0, call.uniformOffset, 0);
+		// kha__checkError(gl, "fill simple");
+
+		// glDisable(GL_CULL_FACE); // TODO
+		for (i in 0...npaths)
+			drawTriangleFan(context, paths.value(i).fillOffset, paths.value(i).fillCount);
+		// glEnable(GL_CULL_FACE); // TODO
+
+		// Draw anti-aliased pixels
+		context.g.setPipeline(context.pipelineFill1);
+
+		kha__setUniforms(context, context.uniformsFill1, call.uniformOffset + context.fragSize, call.image);
+		// kha__checkError(gl, "fill fill");
+
+		if (context.flags & NVG.NVGcreateFlags.NVG_ANTIALIAS != 0) {
+			// Draw fringes
+			for (i in 0...npaths)
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
+		}
+
+		// Draw fill
+		context.g.setPipeline(context.pipelineFill2);
+		kha__setUniforms(context, context.uniformsFill2, call.uniformOffset + context.fragSize, call.image);
+		drawTriangleStrip(context, call.triangleOffset, call.triangleCount);
 	}
 
 	static function kha__maxi(a: Int, b: Int): Int {
