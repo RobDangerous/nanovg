@@ -67,7 +67,7 @@ class KhaContext {
 		structure.add("vertex", Float2);
 		structure.add("tcoord", Float2);
 		pipeline.inputLayout = [structure];
-		pipeline.cullMode = CounterClockwise;
+		pipeline.cullMode = None; // TODO
 		pipeline.stencilMode = Always;
 		pipeline.stencilBothPass = Keep;
 		pipeline.stencilDepthFail = Keep;

@@ -190,6 +190,16 @@ class KhaParams extends NVGparams {
 		context.nuniforms = 0;
 	}
 
+	static function drawTriangleFan(context: KhaContext, first: Int, count: Int) {
+		context.g.setIndexBuffer(context.fanIndexBuf);
+		context.g.drawIndexedVertices(first, (count - 2) * 3);
+	}
+
+	static function drawTriangleStrip(context: KhaContext, first: Int, count: Int) {
+		context.g.setIndexBuffer(context.stripIndexBuf);
+		context.g.drawIndexedVertices(first, (count - 2) * 3);
+	}
+
 	static function kha__convexFill(context: KhaContext, call: KhaCall): Void {
 		var paths: Pointer<KhaPath> = context.paths.pointer(call.pathOffset);
 		var npaths: Int = call.pathCount;
@@ -198,12 +208,10 @@ class KhaParams extends NVGparams {
 		// kha__checkError(gl, "convex fill");
 
 		for (i in 0...npaths) {
-			context.g.setIndexBuffer(context.fanIndexBuf);
-			context.g.drawIndexedVertices(paths.value(i).fillOffset, paths.value(i).fillCount);
+			drawTriangleFan(context, paths.value(i).fillOffset, paths.value(i).fillCount);
 			// Draw fringes
 			if (paths.value(i).strokeCount > 0) {
-				context.g.setIndexBuffer(context.stripIndexBuf);
-				context.g.drawIndexedVertices(paths.value(i).strokeOffset, paths.value(i).strokeCount);
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
 			}
 		}
 	}
@@ -510,7 +518,7 @@ class KhaParams extends NVGparams {
 		for (i in 0...npaths) {
 			var copy: KhaPath = context.paths.value(call.pathOffset + i);
 			var path: NVGpath = paths[i];
-			path.nullify();
+			copy.nullify();
 			if (path.nfill > 0) {
 				copy.fillOffset = offset;
 				copy.fillCount = path.nfill;

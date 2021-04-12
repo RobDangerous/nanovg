@@ -1,0 +1,26 @@
+{
+	"defaultSeverity": "INFO",
+	"checks": [
+		{
+			"type": "UnusedLocalVar"
+		},
+		{
+			"type": "UnnecessaryConstructor"
+		},
+		{
+			"type": "AvoidStarImport"
+		},
+		{
+			"type": "PublicAccessor"
+		},
+		{
+			"type": "RedundantModifier"
+		},
+		{
+			"type": "StringLiteral",
+			"props": {
+				"policy": "doubleAndInterpolation"
+			}
+		}
+	]
+}

@@ -7,4 +7,11 @@ class KhaPath {
 	public var strokeCount: Int;
 
 	public function new() {}
+
+	public function nullify() {
+		fillOffset = 0;
+		fillCount = 0;
+		strokeOffset = 0;
+		strokeCount = 0;
+	}
 }
