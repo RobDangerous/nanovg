@@ -166,8 +166,7 @@ class KhaParams extends NVGparams {
 					kha__convexFill(context, call);
 				}
 				else if (call.type == KHA_STROKE) {
-					trace("kha__stroke");
-					// kha__stroke(context, call);
+					kha__stroke(context, call);
 				}
 				else if (call.type == KHA_TRIANGLES) {
 					trace("kha__triangles");
@@ -207,6 +206,46 @@ class KhaParams extends NVGparams {
 			if (paths.value(i).strokeCount > 0) {
 				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
 			}
+		}
+	}
+
+	static function kha__stroke(context: KhaContext, call: KhaCall): Void {
+		var paths: Pointer<KhaPath> = context.paths.pointer(call.pathOffset);
+		var npaths: Int = call.pathCount;
+
+		if (context.flags & NVG.NVGcreateFlags.NVG_STENCIL_STROKES != 0) {
+			/*glEnable(GL_STENCIL_TEST);
+				glnvg__stencilMask(context, 0xff);
+				// Fill the stroke base without overlap
+				glnvg__stencilFunc(context, GL_EQUAL, 0x0, 0xff);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_INCR); */
+			kha__setUniforms(context, context.uniformsBase, call.uniformOffset + context.fragSize, call.image);
+			// glnvg__checkError(gl, "stroke fill 0");
+			for (i in 0...npaths)
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
+			// Draw anti-aliased pixels.
+			kha__setUniforms(context, context.uniformsBase, call.uniformOffset, call.image);
+			/*glnvg__stencilFunc(context, GL_EQUAL, 0x00, 0xff);
+				glStencilOp(GL_KEEP, GL_KEEP, GL_KEEP); */
+			for (i in 0...npaths)
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
+			// Clear stencil buffer.
+			/*glColorMask(GL_FALSE, GL_FALSE, GL_FALSE, GL_FALSE);
+				glnvg__stencilFunc(gl, GL_ALWAYS, 0x0, 0xff);
+				glStencilOp(GL_ZERO, GL_ZERO, GL_ZERO); */
+			// glnvg__checkError(context, "stroke fill 1");
+			for (i in 0...npaths)
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
+			/*glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
+				glDisable(GL_STENCIL_TEST); */
+			//		glnvg__convertPaint(gl, nvg__fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, strokeWidth, fringe, 1.0f - 0.5f/255.0f);
+		}
+		else {
+			kha__setUniforms(context, context.uniformsBase, call.uniformOffset, call.image);
+			// glnvg__checkError(context, "stroke fill");
+			// Draw Strokes
+			for (i in 0...npaths)
+				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
 		}
 	}
 
@@ -608,7 +647,72 @@ class KhaParams extends NVGparams {
 
 	override public function renderStroke(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor, fringe: Float,
 			strokeWidth: Float, paths: Vector<NVGpath>, npaths: Int): Void {
-		trace("renderStroke");
+		var context: KhaContext = uptr;
+		var call: KhaCall = kha__allocCall(context);
+		var maxverts: Int;
+		var offset: Int;
+
+		if (call == null)
+			return;
+
+		call.type = KHA_STROKE;
+		call.pathOffset = kha__allocPaths(context, npaths);
+		if (call.pathOffset == -1) {
+			if (context.ncalls > 0)
+				context.ncalls--;
+			return;
+		}
+
+		call.pathCount = npaths;
+		call.image = paint.image;
+		call.blendFunc = kha__blendCompositeOperation(compositeOperation);
+
+		// Allocate vertices for all the paths.
+		maxverts = kha__maxVertCount(paths, npaths);
+		offset = kha__allocVerts(context, maxverts);
+		if (offset == -1) {
+			if (context.ncalls > 0)
+				context.ncalls--;
+			return;
+		}
+
+		for (i in 0...npaths) {
+			var copy: KhaPath = context.paths.value(call.pathOffset + i);
+			var path: NVGpath = paths[i];
+			copy.nullify();
+			if (path.nstroke != 0) {
+				copy.strokeOffset = offset;
+				copy.strokeCount = path.nstroke;
+				for (j in 0...path.nstroke) {
+					context.verts.setValue(offset + j, path.stroke.value(j));
+				}
+				offset += path.nstroke;
+			}
+		}
+
+		if (context.flags & NVG.NVGcreateFlags.NVG_STENCIL_STROKES != 0) {
+			// Fill shader
+			call.uniformOffset = kha__allocFragUniforms(context, 2);
+			if (call.uniformOffset == -1) {
+				if (context.ncalls > 0)
+					context.ncalls--;
+				return;
+			}
+
+			kha__convertPaint(context, kha__fragUniformPtr(context, call.uniformOffset), paint, scissor, strokeWidth, fringe, -1.0);
+			kha__convertPaint(context, kha__fragUniformPtr(context, call.uniformOffset + context.fragSize), paint, scissor, strokeWidth, fringe,
+				1.0 - 0.5 / 255.0);
+		}
+		else {
+			// Fill shader
+			call.uniformOffset = kha__allocFragUniforms(context, 1);
+			if (call.uniformOffset == -1) {
+				if (context.ncalls > 0)
+					context.ncalls--;
+				return;
+			}
+			kha__convertPaint(context, kha__fragUniformPtr(context, call.uniformOffset), paint, scissor, strokeWidth, fringe, -1.0);
+		}
 	}
 
 	override public function renderTriangles(uptr: Dynamic, paint: NVGpaint, compositeOperation: NVGcompositeOperationState, scissor: NVGscissor,
