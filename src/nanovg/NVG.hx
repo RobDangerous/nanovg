@@ -1670,7 +1670,17 @@ class NVG {
 			var ly1: Float = 0;
 			var a0: Float;
 			var a1: Float;
-			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, new Ref<Float>(lx0), new Ref<Float>(ly0), new Ref<Float>(lx1), new Ref<Float>(ly1));
+
+			var x0p = new Ref<Float>(lx0);
+			var y0p = new Ref<Float>(ly0);
+			var x1p = new Ref<Float>(lx1);
+			var y1p = new Ref<Float>(ly1);
+			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, x0p, y0p, x1p, y1p);
+			ly1 = y1p.value;
+			lx1 = x1p.value;
+			ly0 = y0p.value;
+			lx0 = x0p.value;
+
 			a0 = nvg__atan2f(-dly0, -dlx0);
 			a1 = nvg__atan2f(-dly1, -dlx1);
 			if (a1 > a0)
@@ -1705,7 +1715,17 @@ class NVG {
 			var ry1: Float = 0;
 			var a0: Float;
 			var a1: Float;
-			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, new Ref<Float>(rx0), new Ref<Float>(ry0), new Ref<Float>(rx1), new Ref<Float>(ry1));
+
+			var x0p = new Ref<Float>(rx0);
+			var y0p = new Ref<Float>(ry0);
+			var x1p = new Ref<Float>(rx1);
+			var y1p = new Ref<Float>(ry1);
+			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, x0p, y0p, x1p, y1p);
+			ry1 = y1p.value;
+			rx1 = x1p.value;
+			ry0 = y0p.value;
+			rx0 = x0p.value;
+
 			a0 = nvg__atan2f(dly0, dlx0);
 			a1 = nvg__atan2f(dly1, dlx1);
 			if (a1 < a0)
@@ -1753,7 +1773,15 @@ class NVG {
 		// NVG_NOTUSED(fringe);
 
 		if ((p1.flags & NVG_PT_LEFT) != 0) {
-			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, new Ref<Float>(lx0), new Ref<Float>(ly0), new Ref<Float>(lx1), new Ref<Float>(ly1));
+			var x0p = new Ref<Float>(lx0);
+			var y0p = new Ref<Float>(ly0);
+			var x1p = new Ref<Float>(lx1);
+			var y1p = new Ref<Float>(ly1);
+			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, lw, x0p, y0p, x1p, y1p);
+			ly1 = y1p.value;
+			lx1 = x1p.value;
+			ly0 = y0p.value;
+			lx0 = x0p.value;
 
 			nvg__vset(dst.value(), lx0, ly0, lu, 1);
 			dst.inc();
@@ -1797,7 +1825,15 @@ class NVG {
 			dst.inc();
 		}
 		else {
-			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, new Ref<Float>(rx0), new Ref<Float>(ry0), new Ref<Float>(rx1), new Ref<Float>(ry1));
+			var x0p = new Ref<Float>(rx0);
+			var y0p = new Ref<Float>(ry0);
+			var x1p = new Ref<Float>(rx1);
+			var y1p = new Ref<Float>(ry1);
+			nvg__chooseBevel(p1.flags & NVG_PR_INNERBEVEL, p0, p1, -rw, x0p, y0p, x1p, y1p);
+			ry1 = y1p.value;
+			rx1 = x1p.value;
+			ry0 = y0p.value;
+			rx0 = x0p.value;
 
 			nvg__vset(dst.value(), p1.x + dlx0 * lw, p1.y + dly0 * lw, lu, 1);
 			dst.inc();
