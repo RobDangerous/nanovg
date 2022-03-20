@@ -1615,7 +1615,11 @@ class NVG {
 				// Calculate segment direction and length
 				p0.value().dx = p1.value().x - p0.value().x;
 				p0.value().dy = p1.value().y - p0.value().y;
-				p0.value().len = nvg__normalize(new Ref<Float>(p0.value().dx), new Ref<Float>(p0.value().dy));
+				var dxp = new Ref<Float>(p0.value().dx);
+				var dyp = new Ref<Float>(p0.value().dy);
+				p0.value().len = nvg__normalize(dxp, dyp);
+				p0.value().dx = dxp.value;
+				p0.value().dy = dyp.value;
 				// Update bounds
 				cache.bounds[0] = nvg__minf(cache.bounds[0], p0.value().x);
 				cache.bounds[1] = nvg__minf(cache.bounds[1], p0.value().y);
@@ -2082,7 +2086,11 @@ class NVG {
 				// Add cap
 				dx = p1.value().x - p0.value().x;
 				dy = p1.value().y - p0.value().y;
-				nvg__normalize(new Ref<Float>(dx), new Ref<Float>(dy));
+				var dxp = new Ref<Float>(dx);
+				var dyp = new Ref<Float>(dy);
+				nvg__normalize(dxp, dyp);
+				dx = dxp.value;
+				dy = dyp.value;
 				if (lineCap == NVG_BUTT)
 					dst = nvg__buttCapStart(dst, p0.value(), dx, dy, w, -aa * 0.5, aa, u0, u1);
 				else if (lineCap == NVG_BUTT || lineCap == NVG_SQUARE)
@@ -2121,7 +2129,11 @@ class NVG {
 				// Add cap
 				dx = p1.value().x - p0.value().x;
 				dy = p1.value().y - p0.value().y;
-				nvg__normalize(new Ref<Float>(dx), new Ref<Float>(dy));
+				var dxp = new Ref<Float>(dx);
+				var dyp = new Ref<Float>(dy);
+				nvg__normalize(dxp, dyp);
+				dx = dxp.value;
+				dy = dyp.value;
 				if (lineCap == NVG_BUTT)
 					dst = nvg__buttCapEnd(dst, p1.value(), dx, dy, w, -aa * 0.5, aa, u0, u1);
 				else if (lineCap == NVG_BUTT || lineCap == NVG_SQUARE)
@@ -2358,8 +2370,19 @@ class NVG {
 		dy0 = y0 - y1;
 		dx1 = x2 - x1;
 		dy1 = y2 - y1;
-		nvg__normalize(new Ref<Float>(dx0), new Ref<Float>(dy0));
-		nvg__normalize(new Ref<Float>(dx1), new Ref<Float>(dy1));
+		
+		var dxp = new Ref<Float>(dx0);
+		var dyp = new Ref<Float>(dy0);
+		nvg__normalize(dxp, dyp);
+		dx0 = dxp.value;
+		dy0 = dyp.value;
+
+		dxp = new Ref<Float>(dx1);
+		dyp = new Ref<Float>(dy1);
+		nvg__normalize(dxp, dyp);
+		dx1 = dxp.value;
+		dy1 = dyp.value;
+
 		a = nvg__acosf(dx0 * dx1 + dy0 * dy1);
 		d = radius / nvg__tanf(a / 2.0);
 
