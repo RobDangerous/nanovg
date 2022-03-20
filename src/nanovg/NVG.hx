@@ -815,9 +815,9 @@ class NVG {
 		return 1;
 	}
 
-	public static function nvgTransformPoint(dx: Ref<Float>, dy: Ref<Float>, t: Vector<Float>, sx: Float, sy: Float): Void {
-		dx.value = sx * t[0] + sy * t[2] + t[4];
-		dy.value = sx * t[1] + sy * t[3] + t[5];
+	public static function nvgTransformPoint(dx: Pointer<Float>, dy: Pointer<Float>, t: Vector<Float>, sx: Float, sy: Float): Void {
+		dx.setValue(0, sx * t[0] + sy * t[2] + t[4]);
+		dy.setValue(0, sx * t[1] + sy * t[3] + t[5]);
 	}
 
 	public static function nvgDegToRad(deg: Float): Float {
@@ -1298,15 +1298,15 @@ class NVG {
 			var cmd: Int = Std.int(vals[i]);
 			switch (cmd) {
 				case NVG_MOVETO:
-					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
+					nvgTransformPoint(new Pointer<Float>(vals, i + 1), new Pointer<Float>(vals, i + 2), state.xform, vals[i + 1], vals[i + 2]);
 					i += 3;
 				case NVG_LINETO:
-					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
+					nvgTransformPoint(new Pointer<Float>(vals, i + 1), new Pointer<Float>(vals, i + 2), state.xform, vals[i + 1], vals[i + 2]);
 					i += 3;
 				case NVG_BEZIERTO:
-					nvgTransformPoint(new Ref<Float>(vals[i + 1]), new Ref<Float>(vals[i + 2]), state.xform, vals[i + 1], vals[i + 2]);
-					nvgTransformPoint(new Ref<Float>(vals[i + 3]), new Ref<Float>(vals[i + 4]), state.xform, vals[i + 3], vals[i + 4]);
-					nvgTransformPoint(new Ref<Float>(vals[i + 5]), new Ref<Float>(vals[i + 6]), state.xform, vals[i + 5], vals[i + 6]);
+					nvgTransformPoint(new Pointer<Float>(vals, i + 1), new Pointer<Float>(vals, i + 2), state.xform, vals[i + 1], vals[i + 2]);
+					nvgTransformPoint(new Pointer<Float>(vals, i + 3), new Pointer<Float>(vals, i + 4), state.xform, vals[i + 3], vals[i + 4]);
+					nvgTransformPoint(new Pointer<Float>(vals, i + 5), new Pointer<Float>(vals, i + 6), state.xform, vals[i + 5], vals[i + 6]);
 					i += 7;
 				case NVG_CLOSE:
 					i++;
@@ -2917,10 +2917,10 @@ class NVG {
 			}
 			prevIter = iter;
 			// Transform corners.
-			nvgTransformPoint(new Ref<Float>(c[0]), new Ref<Float>(c[1]), state.xform, q.x0 * invscale, q.y0 * invscale);
-			nvgTransformPoint(new Ref<Float>(c[2]), new Ref<Float>(c[3]), state.xform, q.x1 * invscale, q.y0 * invscale);
-			nvgTransformPoint(new Ref<Float>(c[4]), new Ref<Float>(c[5]), state.xform, q.x1 * invscale, q.y1 * invscale);
-			nvgTransformPoint(new Ref<Float>(c[6]), new Ref<Float>(c[7]), state.xform, q.x0 * invscale, q.y1 * invscale);
+			nvgTransformPoint(new Pointer<Float>(c, 0), new Pointer<Float>(c, 1), state.xform, q.x0 * invscale, q.y0 * invscale);
+			nvgTransformPoint(new Pointer<Float>(c, 2), new Pointer<Float>(c, 3), state.xform, q.x1 * invscale, q.y0 * invscale);
+			nvgTransformPoint(new Pointer<Float>(c, 4), new Pointer<Float>(c, 5), state.xform, q.x1 * invscale, q.y1 * invscale);
+			nvgTransformPoint(new Pointer<Float>(c, 6), new Pointer<Float>(c, 7), state.xform, q.x0 * invscale, q.y1 * invscale);
 			// Create triangles
 			if (nverts + 6 <= cverts) {
 				nvg__vset(verts.value(nverts), c[0], c[1], q.s0, q.t0);
