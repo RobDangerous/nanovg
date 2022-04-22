@@ -139,6 +139,8 @@ class KhaContext {
 		uniformsFill2 = createUniforms(pipelineFill2);
 
 		textures[0] = null;
+
+		fragSize = 1;
 	}
 
 	function createUniforms(pipeline: PipelineState): Uniforms {
