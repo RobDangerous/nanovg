@@ -201,7 +201,7 @@ class KhaParams extends NVGparams {
 
 	static function drawTriangleStrip(context: KhaContext, first: Int, count: Int) {
 		context.g.setIndexBuffer(context.stripIndexBuf);
-		context.g.drawIndexedVertices(first, (count - 2) * 3);
+		context.g.drawIndexedVertices(first * 3, (count - 2) * 3);
 	}
 
 	static function kha__convexFill(context: KhaContext, call: KhaCall): Void {
