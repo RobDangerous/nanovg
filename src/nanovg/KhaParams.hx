@@ -109,7 +109,10 @@ class KhaParams extends NVGparams {
 		if (context.vertBuf != null) {
 			context.vertBuf.delete();
 			context.stripIndexBuf.delete();
-			context.fanIndexBuf.delete();
+			for (fanIndexBuf in context.fanIndexBufs) {
+				fanIndexBuf.delete();
+			}
+			context.fanIndexBufs = new Map();
 		}
 
 		context.vertBuf = new VertexBuffer(context.nverts, context.structure, DynamicUsage);
@@ -123,17 +126,6 @@ class KhaParams extends NVGparams {
 				indices[(i - 2) * 3 + 2] = i - 0;
 			}
 			context.stripIndexBuf.unlock();
-		}
-
-		{
-			context.fanIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
-			var indices = context.fanIndexBuf.lock();
-			for (i in 2...context.nverts) {
-				indices[(i - 2) * 3 + 0] = 0;
-				indices[(i - 2) * 3 + 1] = i - 1;
-				indices[(i - 2) * 3 + 2] = i - 0;
-			}
-			context.fanIndexBuf.unlock();
 		}
 	}
 
@@ -182,9 +174,29 @@ class KhaParams extends NVGparams {
 		context.nuniforms = 0;
 	}
 
+	static function getFanIndexBuf(context: KhaContext, offset: Int): IndexBuffer {
+		var fanIndexBuf = context.fanIndexBufs.get(offset);
+		if (fanIndexBuf != null) {
+			return fanIndexBuf;
+		}
+
+		fanIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
+		var indices = fanIndexBuf.lock();
+		for (i in 2...context.nverts) {
+			indices[(i - 2) * 3 + 0] = offset;
+			indices[(i - 2) * 3 + 1] = offset + i - 1;
+			indices[(i - 2) * 3 + 2] = offset + i - 0;
+		}
+		fanIndexBuf.unlock();
+
+		context.fanIndexBufs.set(offset, fanIndexBuf);
+
+		return fanIndexBuf;
+	}
+
 	static function drawTriangleFan(context: KhaContext, first: Int, count: Int) {
-		context.g.setIndexBuffer(context.fanIndexBuf);
-		context.g.drawIndexedVertices(first, (count - 2) * 3);
+		context.g.setIndexBuffer(getFanIndexBuf(context, first));
+		context.g.drawIndexedVertices(0, (count - 2) * 3);
 	}
 
 	static function drawTriangleStrip(context: KhaContext, first: Int, count: Int) {
@@ -219,6 +231,7 @@ class KhaParams extends NVGparams {
 				// Fill the stroke base without overlap
 				glnvg__stencilFunc(context, GL_EQUAL, 0x0, 0xff);
 				glStencilOp(GL_KEEP, GL_KEEP, GL_INCR); */
+			context.g.setPipeline(context.pipeline);
 			kha__setUniforms(context, context.uniformsBase, call.uniformOffset + context.fragSize, call.image);
 			// glnvg__checkError(gl, "stroke fill 0");
 			for (i in 0...npaths)
@@ -241,6 +254,7 @@ class KhaParams extends NVGparams {
 			//		glnvg__convertPaint(gl, nvg__fragUniformPtr(gl, call->uniformOffset + gl->fragSize), paint, scissor, strokeWidth, fringe, 1.0f - 0.5f/255.0f);
 		}
 		else {
+			context.g.setPipeline(context.pipeline);
 			kha__setUniforms(context, context.uniformsBase, call.uniformOffset, call.image);
 			// glnvg__checkError(context, "stroke fill");
 			// Draw Strokes
