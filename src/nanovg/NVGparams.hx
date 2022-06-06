@@ -10,7 +10,7 @@ class NVGparams {
 		return 0;
 	}
 
-	public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int {
+	public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: kha.Image): Int {
 		return 0;
 	}
 
@@ -18,7 +18,7 @@ class NVGparams {
 		return 0;
 	}
 
-	public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: Array<Int>): Int {
+	public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: haxe.io.Bytes): Int {
 		return 0;
 	}
 

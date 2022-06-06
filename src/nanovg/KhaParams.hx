@@ -28,16 +28,16 @@ class KhaParams extends NVGparams {
 		return 1;
 	}
 
-	override public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int {
+	override public function renderCreateTexture(uptr: Dynamic, type: Int, w: Int, h: Int, imageFlags: Int, data: kha.Image): Int {
 		var context: KhaContext = uptr;
 		var tex = new KhaTexture();
 		tex.id = context.textures.length;
-		tex.image = Image.create(w, h);
+		tex.image = data; //Image.create(w, h);
 
 		if (tex == null)
 			return 0;
 
-		if (data != null) {
+		/*if (data != null) {
 			var pixels = tex.image.lock();
 			for (x in 0...w) {
 				for (y in 0...h) {
@@ -45,7 +45,7 @@ class KhaParams extends NVGparams {
 				}
 			}
 			tex.image.unlock();
-		}
+		}*/
 
 		context.textures.push(tex);
 		return tex.id;
@@ -64,17 +64,13 @@ class KhaParams extends NVGparams {
 		return 0;
 	}
 
-	override public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: Array<Int>): Int {
+	override public function renderUpdateTexture(uptr: Dynamic, image: Int, x: Int, y: Int, w: Int, h: Int, data: haxe.io.Bytes): Int {
 		var context: KhaContext = uptr;
 
 		var tex = context.textures[image];
 		if (context.textures[image] != null) {
 			var pixels = tex.image.lock();
-			for (x in 0...w) {
-				for (y in 0...h) {
-					pixels.set(y * h * w * 4 + x * 4, data[y * h * w + x]);
-				}
-			}
+			pixels.blit(0, data, 0, data.length);
 			tex.image.unlock();
 			return 1;
 		}
@@ -400,9 +396,8 @@ class KhaParams extends NVGparams {
 	}
 
 	static function kha__findTexture(context: KhaContext, id: Int): KhaTexture {
-		var i: Int;
-		for (i in 0...context.ntextures)
-			if (context.textures[i].id == id)
+		for (i in 0...context.textures.length)
+			if (context.textures[i] != null && context.textures[i].id == id)
 				return context.textures[i];
 		return null;
 	}

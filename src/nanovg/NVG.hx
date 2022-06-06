@@ -992,44 +992,32 @@ class NVG {
 		nvgTransformMultiply(state.fill.xform, state.xform);
 	}
 
-	public static function nvgCreateImage(ctx: NVGcontext, filename: String, imageFlags: Int): Int {
+	public static function nvgCreateImage(ctx: NVGcontext, img: kha.Image, imageFlags: Int): Int {
 		var w: Int = 0;
 		var h: Int = 0;
 		var n: Int;
 		var image: Int;
-		var img: Array<Int> = null;
-		// stbi_set_unpremultiply_on_load(1);
-		// stbi_convert_iphone_png_to_rgb(1);
-		//**img = stbi_load(filename, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
-		if (img == null) {
-			//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-			return 0;
-		}
+		// stbi_set_unpremultiply_on_load(1); // TODO
 		image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-		// stbi_image_free(img);
 		return image;
 	}
 
-	public static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: Array<Int>, ndata: Int): Int {
-		var w: Int = 0;
-		var h: Int = 0;
-		var n: Int;
-		var image: Int;
-		var img: Array<Int> = null; //**stbi_load_from_memory(data, ndata, new Ref<Int>(w), new Ref<Int>(h), new Ref<Int>(n), 4);
-		if (img == null) {
-			//		printf("Failed to load %s - %s\n", filename, stbi_failure_reason());
-			return 0;
-		}
-		image = nvgCreateImageRGBA(ctx, w, h, imageFlags, img);
-		// stbi_image_free(img);
-		return image;
+	public static function nvgCreateImageMem(ctx: NVGcontext, imageFlags: Int, data: haxe.io.Bytes, fileExtension: String, doneCallback: Int -> Void): Void {
+		kha.Image.fromEncodedBytes(data, fileExtension,
+			(img: kha.Image) -> {
+				doneCallback(nvgCreateImageRGBA(ctx, img.width, img.height, imageFlags, img));
+			},
+			(err: String) -> {
+				trace("Could not create image: " + err);
+			}
+		);
 	}
 
-	public static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: Array<Int>): Int {
+	public static function nvgCreateImageRGBA(ctx: NVGcontext, w: Int, h: Int, imageFlags: Int, data: kha.Image): Int {
 		return ctx.params.renderCreateTexture(ctx.params.userPtr, NVGtexture.NVG_TEXTURE_RGBA, w, h, imageFlags, data);
 	}
 
-	public static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: Array<Int>): Void {
+	public static function nvgUpdateImage(ctx: NVGcontext, image: Int, data: haxe.io.Bytes): Void {
 		var w: Int = 0;
 		var h: Int = 0;
 		ctx.params.renderGetTextureSize(ctx.params.userPtr, image, new Ref<Int>(w), new Ref<Int>(h));
@@ -2856,7 +2844,7 @@ class NVG {
 			if (fontImage != 0) {
 				var iw: Int = 0;
 				var ih: Int = 0;
-				var data: Array<Int> = fonsGetTextureData(ctx.fs, new Ref<Int>(iw), new Ref<Int>(ih));
+				var data: haxe.io.Bytes = fonsGetTextureData(ctx.fs, new Ref<Int>(iw), new Ref<Int>(ih));
 				var x: Int = dirty[0];
 				var y: Int = dirty[1];
 				var w: Int = dirty[2] - dirty[0];
@@ -3458,7 +3446,7 @@ class NVG {
 		return 0;
 	}
 
-	static function fonsGetTextureData(stash: FONScontext, width: Ref<Int>, height: Ref<Int>): Array<Int> {
+	static function fonsGetTextureData(stash: FONScontext, width: Ref<Int>, height: Ref<Int>): haxe.io.Bytes {
 		return null;
 	}
 
