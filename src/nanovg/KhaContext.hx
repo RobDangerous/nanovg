@@ -71,15 +71,15 @@ class KhaContext {
 
 	public var g: Graphics;
 
-	public function new() {
+	public function new(edgeaa: Bool) {
 		structure = new VertexStructure();
 		structure.add("vertex", Float2);
 		structure.add("tcoord", Float2);
 
-		pipeline = createPipeline();
+		pipeline = createPipeline(edgeaa);
 		pipeline.compile();
 
-		pipelineFill0 = createPipeline();
+		pipelineFill0 = createPipeline(edgeaa);
 		pipelineFill0.stencilWriteMask = 0xff;
 		pipelineFill0.stencilFrontMode = Always;
 		pipelineFill0.stencilBackMode = Always;
@@ -97,7 +97,7 @@ class KhaContext {
 		pipelineFill0.colorWriteMaskAlpha = false;
 		pipelineFill0.compile();
 
-		pipelineFill1 = createPipeline();
+		pipelineFill1 = createPipeline(edgeaa);
 		pipelineFill1.stencilWriteMask = 0xff;
 		pipelineFill1.stencilFrontMode = Equal;
 		pipelineFill1.stencilBackMode = Equal;
@@ -115,7 +115,7 @@ class KhaContext {
 		pipelineFill1.colorWriteMaskAlpha = true;
 		pipelineFill1.compile();
 
-		pipelineFill2 = createPipeline();
+		pipelineFill2 = createPipeline(edgeaa);
 		pipelineFill2.stencilWriteMask = 0xff;
 		pipelineFill2.stencilFrontMode = NotEqual;
 		pipelineFill2.stencilBackMode = NotEqual;
@@ -163,9 +163,9 @@ class KhaContext {
 		return uniforms;
 	}
 
-	function createPipeline(): PipelineState {
+	function createPipeline(edgeaa: Bool): PipelineState {
 		var pipeline = new PipelineState();
-		pipeline.fragmentShader = Shaders.fill_frag;
+		pipeline.fragmentShader = edgeaa ? Shaders.fillaa_frag : Shaders.fill_frag;
 		pipeline.vertexShader = Shaders.fill_vert;
 		pipeline.inputLayout = [structure];
 		pipeline.cullMode = None; // TODO

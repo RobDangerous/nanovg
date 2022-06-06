@@ -3452,14 +3452,15 @@ class NVG {
 
 	public static function nvgCreateKha(flags: Int): NVGcontext {
 		var params = new KhaParams();
+		params.edgeAntiAlias = (flags & NVG_ANTIALIAS != 0) ? 1 : 0;
+
 		var ctx: NVGcontext = null;
-		var kha: KhaContext = new KhaContext();
+		var kha: KhaContext = new KhaContext(params.edgeAntiAlias == 1);
 		if (kha == null)
 			return null;
 
 		params.userPtr = kha;
-		params.edgeAntiAlias = (flags & NVG_ANTIALIAS != 0) ? 1 : 0;
-
+		
 		kha.flags = flags;
 
 		ctx = nvgCreateInternal(params);
