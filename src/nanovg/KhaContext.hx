@@ -50,6 +50,7 @@ class KhaContext {
 	public var ctextures: Int;
 	public var textureId: Int;
 	public var vertBuf: VertexBuffer;
+	public var triIndexBuf: IndexBuffer;
 	public var stripIndexBuf: IndexBuffer;
 	public var fanIndexBufs = new Map<Int, IndexBuffer>();
 

@@ -108,6 +108,7 @@ class KhaParams extends NVGparams {
 	function createVertexBuffer(context: KhaContext): Void {
 		if (context.vertBuf != null) {
 			context.vertBuf.delete();
+			context.triIndexBuf.delete();
 			context.stripIndexBuf.delete();
 			for (fanIndexBuf in context.fanIndexBufs) {
 				fanIndexBuf.delete();
@@ -116,6 +117,15 @@ class KhaParams extends NVGparams {
 		}
 
 		context.vertBuf = new VertexBuffer(context.nverts, context.structure, DynamicUsage);
+
+		{
+			context.triIndexBuf = new IndexBuffer(context.nverts, StaticUsage);
+			var indices = context.triIndexBuf.lock();
+			for (i in 0...context.nverts) {
+				indices[i] = i;
+			}
+			context.triIndexBuf.unlock();
+		}
 
 		{
 			context.stripIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
@@ -150,7 +160,7 @@ class KhaParams extends NVGparams {
 
 			for (i in 0...context.ncalls) {
 				var call: KhaCall = context.calls[i];
-				// kha__blendFuncSeparate(context,call.blendFunc);
+				// kha__blendFuncSeparate(context,call.blendFunc); // TODO
 				if (call.type == KHA_FILL) {
 					kha__fill(context, call);
 				}
@@ -162,7 +172,7 @@ class KhaParams extends NVGparams {
 				}
 				else if (call.type == KHA_TRIANGLES) {
 					trace("kha__triangles");
-					// kha__triangles(context, call);
+					kha__triangles(context, call);
 				}
 			}
 		}
@@ -202,6 +212,12 @@ class KhaParams extends NVGparams {
 	static function drawTriangleStrip(context: KhaContext, first: Int, count: Int) {
 		context.g.setIndexBuffer(context.stripIndexBuf);
 		context.g.drawIndexedVertices(first * 3, (count - 2) * 3);
+	}
+
+	static function drawTriangles(context: KhaContext, first: Int, count: Int) {
+		// TODO: Check this
+		context.g.setIndexBuffer(context.triIndexBuf);
+		context.g.drawIndexedVertices(first, count);
 	}
 
 	static function kha__convexFill(context: KhaContext, call: KhaCall): Void {
@@ -261,6 +277,13 @@ class KhaParams extends NVGparams {
 			for (i in 0...npaths)
 				drawTriangleStrip(context, paths.value(i).strokeOffset, paths.value(i).strokeCount);
 		}
+	}
+
+	static function kha__triangles(context: KhaContext, call: KhaCall): Void {
+		kha__setUniforms(context, context.uniformsBase, call.uniformOffset, call.image);
+		//glnvg__checkError(gl, "triangles fill");
+
+		drawTriangles(context, call.triangleOffset, call.triangleCount);
 	}
 
 	static function kha__setUniforms(context: KhaContext, uniforms: KhaContext.Uniforms, uniformOffset: Int, image: Int): Void {
