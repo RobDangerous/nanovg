@@ -80,6 +80,7 @@ class KhaContext {
 		pipeline.compile();
 
 		pipelineFill0 = createPipeline(edgeaa);
+		pipelineFill0.cullMode = None;
 		pipelineFill0.stencilWriteMask = 0xff;
 		pipelineFill0.stencilFrontMode = Always;
 		pipelineFill0.stencilBackMode = Always;
@@ -168,7 +169,7 @@ class KhaContext {
 		pipeline.fragmentShader = edgeaa ? Shaders.fillaa_frag : Shaders.fill_frag;
 		pipeline.vertexShader = Shaders.fill_vert;
 		pipeline.inputLayout = [structure];
-		pipeline.cullMode = None; // TODO
+		pipeline.cullMode = Clockwise;
 		pipeline.stencilFrontMode = Always;
 		pipeline.stencilFrontBothPass = Keep;
 		pipeline.stencilFrontDepthFail = Keep;

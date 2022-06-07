@@ -127,9 +127,16 @@ class KhaParams extends NVGparams {
 			context.stripIndexBuf = new IndexBuffer((context.nverts - 2) * 3, StaticUsage);
 			var indices = context.stripIndexBuf.lock();
 			for (i in 2...context.nverts) {
-				indices[(i - 2) * 3 + 0] = i - 2;
-				indices[(i - 2) * 3 + 1] = i - 1;
-				indices[(i - 2) * 3 + 2] = i - 0;
+				if (i % 2 == 0) {
+					indices[(i - 2) * 3 + 0] = i - 2;
+					indices[(i - 2) * 3 + 1] = i - 1;
+					indices[(i - 2) * 3 + 2] = i - 0;
+				}
+				else {
+					indices[(i - 2) * 3 + 0] = i - 1;
+					indices[(i - 2) * 3 + 1] = i - 2;
+					indices[(i - 2) * 3 + 2] = i - 0;
+				}
 			}
 			context.stripIndexBuf.unlock();
 		}
@@ -311,10 +318,8 @@ class KhaParams extends NVGparams {
 		kha__setUniforms(context, context.uniformsFill0, call.uniformOffset, 0);
 		// kha__checkError(gl, "fill simple");
 
-		// glDisable(GL_CULL_FACE); // TODO
 		for (i in 0...npaths)
 			drawTriangleFan(context, paths.value(i).fillOffset, paths.value(i).fillCount);
-		// glEnable(GL_CULL_FACE); // TODO
 
 		// Draw anti-aliased pixels
 		context.g.setPipeline(context.pipelineFill1);
